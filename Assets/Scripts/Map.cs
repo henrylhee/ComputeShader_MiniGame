@@ -101,7 +101,7 @@ public class Map
                     {
                         if (Random.Range(0f, 1f) < fractionSettings[fractionId].ConquerRate)
                         {
-                            ConquerPoint(fractionId, newPos, newIndex, direction);
+                            ConquerPoint(fractionId, newPos, newIndex, (direction+2)%4);
                         }
                     }
                 }
@@ -118,7 +118,6 @@ public class Map
 
             if (IsInactive(activePoints[i].index, activePoints[i].fractionId))
             {
-                activityMap[activePoints[i].index] = false;
                 activePoints.RemoveAt(i);
                 i--;
                 limit--;
@@ -131,9 +130,14 @@ public class Map
         
         colorMap[index] = fractionSettings[id].Color;
         ids[index] = id;
-        for (int i = 0;i < direction;i++)
+        int[] neighbourIndices = GetNeighbourIndices(index);
+        for (int i = 0; i < 4; i++)
         {
-            if(i == direction%4)
+            int neighbourIndex = neighbourIndices[i];
+            if(i != direction && ids[neighbourIndex] != 0 && neighbourIndex != size)
+            {
+                pointsToAdd.Add(new Point(position, id, index));
+            }
         }
     }
 
@@ -142,7 +146,6 @@ public class Map
         colorMap[index] = fractionSettings[id].Color;
         pointsToAdd.Add(new Point(position, id, index));
         ids[index] = id;
-        activityMap[index] = true; 
     }
 
     private Vector2Int CalculateNewPosition(Vector2Int oldPos, int dirIndex)
