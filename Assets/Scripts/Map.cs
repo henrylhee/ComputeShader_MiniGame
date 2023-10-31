@@ -7,6 +7,7 @@ using UnityEngine;
 using static UnityEditor.PlayerSettings;
 using System;
 using UnityEditor.Rendering.LookDev;
+using UnityEngine.UIElements;
 
 public class Map
 {
@@ -15,17 +16,14 @@ public class Map
 
     public Color[] colorMap { get; private set; }
     public Dictionary<int,FractionSettings> fractionSettings { get; private set; }
-    public List<Point> inactivePoints { get; private set; }
     public List<Point> activePoints { get; private set; }
     private Dictionary<int,int> pointsToRemoveIndices;
     private List<Point> pointsToAdd;
 
-    public bool4[] validDirMap { get; private set; }
-
+    private bool4[] validDirMap;
 
     public int[] ids { get; private set; }
-
-    // points zentral here. with id. id-settings dictionary. events
+    public bool[] activityMap { get; private set; }
 
     private int size;
     private Resolution resolution;
@@ -40,20 +38,19 @@ public class Map
         size = resolution.width * resolution.height;
 
         activePoints = new List<Point>();
-        inactivePoints = new List<Point>();
         pointsToAdd = new List<Point>();
 
         Color initColor = new Color(0, 0, 0, 0);
-        int idEmpty = 0;
+        int emptyId = 0;
         bool[] initCanExpand = new bool[4] { true, true, true, true };
-        
 
+        activityMap = new bool[size];
         colorMap = new Color[size];
         ids = new int[size];
         for (int i = 0; i < size; i++)
         {
             colorMap[i] = initColor;
-            ids[i] = idEmpty;
+            ids[i] = emptyId;
         }
 
         InitializeValidDirMap();
@@ -67,7 +64,7 @@ public class Map
     {
         for(int i = 1; i <= fractionSettings.Count; i++)
         {
-            AddPoint(i, fractionSettings[i].StartPosition);
+            AddPoint(i, fractionSettings[i].StartPosition, GetPositionIndex(fractionSettings[i].StartPosition));
         }
         foreach(Point point in pointsToAdd)
         {
@@ -77,34 +74,35 @@ public class Map
 
     public void Update()
     {
-        //Debug.Log("active point count: " + activePoints.Count);
-        //Debug.Log("inactive point count: " + inactivePoints.Count);
+        Debug.Log("active point count: " + activePoints.Count);
 
         pointsToAdd = new List<Point>();
         foreach (Point point in activePoints)
         {
             Vector2Int position = point.position;
-            int index = GetPositionIndex(position);
-            bool4 canExpand = validDirMap[index];
+            int index = point.index;
             int fractionId = point.fractionId;
+            int[] neighbourData = GetNeighbourIds(position);
 
             for (int direction = 0; direction < 4; direction++)
             {
-                Vector2Int newPos = CalculateNewPosition(position, direction);
-                int newIndex = GetPositionIndex(newPos);
-
-                if (canExpand[direction])
+                if (neighbourData[direction] != size)
                 {
-                    if(Random.Range(0f, 1f) < fractionSettings[fractionId].ExpansionRate)
+                    Vector2Int newPos = CalculateNewPosition(position, direction);
+                    int newIndex = GetPositionIndex(newPos);
+                    if (neighbourData[direction] == 0)
                     {
-                        AddPoint(fractionId, newPos);
+                        if (Random.Range(0f, 1f) < fractionSettings[fractionId].ExpansionRate)
+                        {
+                            AddPoint(fractionId, newPos, newIndex);
+                        }
                     }
-                }
-                else if (ids[newIndex] != fractionId)
-                {
-                    if (Random.Range(0f,1f) < fractionSettings[fractionId].ConquerRate)
+                    else if (neighbourData[direction] != fractionId)
                     {
-                        ConquerPoint(fractionId, newPos);
+                        if (Random.Range(0f, 1f) < fractionSettings[fractionId].ConquerRate)
+                        {
+                            ConquerPoint(fractionId, newPos, newIndex, direction);
+                        }
                     }
                 }
             }
@@ -115,8 +113,12 @@ public class Map
         int limit = activePoints.Count;
         for (int i = 0; i < limit; i++)
         {
-            if (IsInactive(GetPositionIndex(activePoints[i].position))) 
+            //overwrite conquered id
+            activePoints[i].fractionId = ids[activePoints[i].index];
+
+            if (IsInactive(activePoints[i].index, activePoints[i].fractionId))
             {
+                activityMap[activePoints[i].index] = false;
                 activePoints.RemoveAt(i);
                 i--;
                 limit--;
@@ -124,45 +126,23 @@ public class Map
         }
     }
 
-    private void ConquerPoint(int fractionId, Vector2Int newPos)
-    {
-        ;
-    }
-
-    public void UpdateState()
+    private void ConquerPoint(int id, Vector2Int position, int index, int direction)
     {
         
-    }
-
-    private void AddPoint(int id, Vector2Int position)
-    {
-        int index = GetPositionIndex(position);
+        colorMap[index] = fractionSettings[id].Color;
         ids[index] = id;
-        this.colorMap[index] = fractionSettings[id].Color;
-        Point point = new Point(position, id);
-        if (IsInactive(index))
+        for (int i = 0;i < direction;i++)
         {
-            inactivePoints.Add(point);
+            if(i == direction%4)
         }
-        else
-        {
-            pointsToAdd.Add(point);
-        }
+    }
 
-        Vector2Int checkPos;
-        int checkIndex;
-        
-        for (int direction = 0; direction < 4; direction++)
-        {
-            checkPos.x = position.x + helperX[direction];
-            checkPos.y = position.y + helperY[direction];
-
-            if(checkPos.x <= resolution.width && checkPos.x > 0 && checkPos.y <= resolution.height && checkPos.y > 0)
-            {
-                checkIndex = GetPositionIndex(checkPos);
-                UpdateValidDir(checkIndex,((direction + 2) % 4),false);
-            }
-        }
+    private void AddPoint(int id, Vector2Int position, int index)
+    {
+        colorMap[index] = fractionSettings[id].Color;
+        pointsToAdd.Add(new Point(position, id, index));
+        ids[index] = id;
+        activityMap[index] = true; 
     }
 
     private Vector2Int CalculateNewPosition(Vector2Int oldPos, int dirIndex)
@@ -195,14 +175,60 @@ public class Map
         validDirMap[index][direction] = value;
     }
 
-    private bool IsInactive(int index)
+    private int[] GetNeighbourIds(Vector2Int position)
     {
-        bool4 canExpand = validDirMap[index];
-        if (canExpand[0] == true) { return false; }
-        else if (canExpand[1] == true) { return false; }
-        else if (canExpand[2] == true) { return false; }
-        else if (canExpand[3] == true) { return false; }
+        int[] neighbourData = new int[4];
+
+        int neighbourIndex;
+        for (int i = 0;i < 4; i++)
+        {
+            Vector2Int newPos = CalculateNewPosition(position, i);
+            if (IsPositionValid(newPos))
+            {
+                neighbourIndex = GetPositionIndex(newPos);
+                neighbourData[i] = ids[neighbourIndex];
+            }
+            else
+            {
+                neighbourData[i] = size;
+            }
+        }
+        return neighbourData;
+    }
+
+    private Vector2Int[] GetNeighbourPositions(Vector2Int position)
+    {
+        Vector2Int[] neighbourPositions = new Vector2Int[4];
+
+        for (int i = 0; i < 4; i++)
+        {
+            neighbourPositions[i] = CalculateNewPosition(position, i);
+        }
+        return neighbourPositions;
+    }
+
+    private bool IsInactive(int index, int id)
+    {
+        int[] neighbourIndices = GetNeighbourIndices(index); ;
+        for (int i = 0; i < 4; i++)
+        {
+            if (neighbourIndices[i] != size)
+            {
+                if (ids[neighbourIndices[i]] == 0) { return false; }
+                if (ids[neighbourIndices[i]] != id) { return false; }
+            }
+        }
         return true;
+    }
+
+    private int[] GetNeighbourIndices(int index)
+    {
+        int[] result = new int[4];
+        result[0] = (index < (resolution.height-1)*resolution.width) ? index+resolution.width : size;
+        result[1] = ((index % resolution.width) != resolution.width - 1) ? index + 1 : size;
+        result[2] = (index >= resolution.width) ? index - resolution.width : size;
+        result[3] = ((index % resolution.width) != 0) ? index + 1 : size;
+        return result;
     }
 
     private void InitializeValidDirMap()
@@ -228,6 +254,12 @@ public class Map
     public int GetPositionIndex(Vector2Int position)
     {
         return resolution.width*(position.y-1) + position.x - 1;
+    }
+
+    public Vector2Int GetIndexPosition(int index)
+    {
+        int y = (int)(index / resolution.width) + 1;
+        return new Vector2Int(index-(y-1)*resolution.width+1, y);
     }
 
     private bool IsPositionValid(Vector2Int position)

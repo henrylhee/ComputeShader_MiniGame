@@ -14,7 +14,7 @@ public class FractionSettings : ScriptableObject
     Vector2Int startPosition;
     public Vector2Int StartPosition { get => startPosition; }
     public Color Color { get => color; }
-    [SerializeField]
+    [SerializeField, Range(0f, 1f)]
     float conquerRate;
     public float ConquerRate { get => conquerRate; }
     [SerializeField, Range(0f,1f)]

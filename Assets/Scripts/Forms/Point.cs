@@ -4,14 +4,16 @@ using UnityEngine;
 
 public class Point
 {
-    public int fractionId { get; private set; }
+    public int fractionId;
     public Vector2Int position { get; private set; }
+    public int index { get; private set; }
 
 
-    public Point(Vector2Int position, int fractionId)
+    public Point(Vector2Int position, int fractionId, int index)
     {
         this.position = position;
         this.fractionId = fractionId;
+        this.index = index;
     }
 }
 
