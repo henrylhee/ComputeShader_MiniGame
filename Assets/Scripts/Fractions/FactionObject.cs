@@ -2,8 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "DefineFraction", menuName = "Fractions")]
-public class FractionSettings : ScriptableObject
+[CreateAssetMenu(fileName = "DefineFaction", menuName = "Factions")]
+public class FactionObject : ScriptableObject
 {
     [SerializeField]
     string _name;

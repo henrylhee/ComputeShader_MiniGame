@@ -14,16 +14,11 @@ public class Map
     //problems to tackle: order of executions in pointlist???
 
 
-    public Color[] colorMap { get; private set; }
-    public Dictionary<int,FractionSettings> fractionSettings { get; private set; }
-    public List<Point> activePoints { get; private set; }
-    private Dictionary<int,int> pointsToRemoveIndices;
-    private List<Point> pointsToAdd;
-
-    private bool4[] validDirMap;
+    public static Color[] colorMap { get; private set; }
+    public Dictionary<int,FractionSettings> factionSettings { get; private set; }
+    private Point[] points;
 
     public int[] ids { get; private set; }
-    public bool[] activityMap { get; private set; }
 
     private int size;
     private int resoX;
@@ -39,20 +34,19 @@ public class Map
         resoY = GameModel.Instance.resolution.height;
         size = resoX * resoY;
 
-        activePoints = new List<Point>();
-        pointsToAdd = new List<Point>();
+        points = new Point[size];
 
         Color initColor = new Color(0, 0, 0, 0);
         int emptyId = 0;
         bool[] initCanExpand = new bool[4] { true, true, true, true };
 
-        activityMap = new bool[size];
         colorMap = new Color[size];
         ids = new int[size];
         for (int i = 0; i < size; i++)
         {
             colorMap[i] = initColor;
             ids[i] = emptyId;
+            points[i] = new Point();
         }
 
         InitializeValidDirMap();

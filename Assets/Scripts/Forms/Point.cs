@@ -5,47 +5,73 @@ using UnityEngine;
 
 public class Point
 {
-    public int fraction;
-    public Vector2Int position { get; private set; }
+    public int faction;
+    public int[] neighbourIndices;
+    public int index;
 
-    public Point[] neighbours;
-    public bool isEmpty;
+
+    public int invalidIndex;
+    public int successfulNeighbourDir;
 
     private float expansionRate;
     private float conquerRate;
     private float defenseValue;
 
     public float[] interference;
-    public int[] interferenceFraction;
+    public int[] interferenceFaction;
 
-    public Point(Vector2Int position, int fraction)
+    public Point(int index, int faction, int[] neighbourIndices)
     {
-        this.position = position;
-        this.fraction = fraction;
-        isEmpty = true;
+        this.index = index;
+        this.faction = faction;
+        this.neighbourIndices = neighbourIndices;
     }
 
-    public void Interact()
+    //private IEnumerable<Vector2Int> Neighbours()
+    //{
+    //    yield return new Vector2Int(position.x, position.y+1);
+    //    yield return new Vector2Int(position.x, position.y-1);
+    //    yield return new Vector2Int(position.x+1, position.y);
+    //    yield return new Vector2Int(position.x-1, position.y);
+    //}
+
+    public void Interact(Point[] points)
     {
-        for (int i = 0; i < neighbours.Length; i++)
+        if (faction == 0) return;
+        int neighbourIndex;
+
+        for (int direction = 0; direction < neighbourIndices.Length; direction++)
         {
-            int direction = (i + 2) % 4;
-            if (neighbours[i].isEmpty)
+            neighbourIndex = neighbourIndices[direction];
+            if (neighbourIndex == invalidIndex) continue;
+
+            if (points[neighbourIndex].faction == 0)
             {
-                interference[direction] = expansionRate;
+                //interference[-->(direction+2)%4]!!!!!!!!!!!!!!!!!!!!!!!!!!!calculation 1 time instead of 4!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                points[neighbourIndex].interference[direction] = Random.Range(0f, FactionSettings[faction].expansionRate);
             }
             else
             {
-                interference[direction] = conquerRate;
+                points[neighbourIndex].interference[direction] = Random.Range(0f, FactionSettings[faction].conquerRate);
             }
-            interferenceFraction[direction] = fraction;
+            points[neighbourIndex].interferenceFaction[direction] = faction;
         }
     }
 
     public void Evaluate()
     {
-        float attackValue;
-
+        float attackValue = 0;
+        for (int i = 0; i < interference.Length; i++)
+        {
+            attackValue = interference[i];
+            if (attackValue > interference[i])
+            {
+                successfulNeighbourDir = i;
+            }
+        }
+        if (attackValue == 0) { return; }
+        faction = interferenceFaction[(successfulNeighbourDir+2)%4];
+        colorMap[index] = FactionSettings[faction].color;
     }
 }
 
