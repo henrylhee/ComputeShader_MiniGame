@@ -26,7 +26,8 @@ public class Map
     public bool[] activityMap { get; private set; }
 
     private int size;
-    private Resolution resolution;
+    private int resoX;
+    private int resoY;
 
     readonly int[] helperX = new int[4] {0,1,0,-1};
     readonly int[] helperY = new int[4] {1,0,-1,0};
@@ -34,8 +35,9 @@ public class Map
 
     public void Initialize(Dictionary<int, FractionSettings> fractionSettings)
     {
-        resolution = GameModel.Instance.resolution;
-        size = resolution.width * resolution.height;
+        resoX = GameModel.Instance.resolution.width;
+        resoY = GameModel.Instance.resolution.height;
+        size = resoX * resoY;
 
         activePoints = new List<Point>();
         pointsToAdd = new List<Point>();
@@ -82,22 +84,22 @@ public class Map
             Vector2Int position = point.position;
             int index = point.index;
             int fractionId = point.fractionId;
-            int[] neighbourData = GetNeighbourIds(position);
+            int[] neighbourIds = GetNeighbourIds(position);
 
             for (int direction = 0; direction < 4; direction++)
             {
-                if (neighbourData[direction] != size)
+                if (neighbourIds[direction] != size)
                 {
                     Vector2Int newPos = CalculateNewPosition(position, direction);
                     int newIndex = GetPositionIndex(newPos);
-                    if (neighbourData[direction] == 0)
+                    if (neighbourIds[direction] == 0)
                     {
                         if (Random.Range(0f, 1f) < fractionSettings[fractionId].ExpansionRate)
                         {
                             AddPoint(fractionId, newPos, newIndex);
                         }
                     }
-                    else if (neighbourData[direction] != fractionId)
+                    else if (neighbourIds[direction] != fractionId)
                     {
                         if (Random.Range(0f, 1f) < fractionSettings[fractionId].ConquerRate)
                         {
@@ -227,10 +229,10 @@ public class Map
     private int[] GetNeighbourIndices(int index)
     {
         int[] result = new int[4];
-        result[0] = (index < (resolution.height-1)*resolution.width) ? index+resolution.width : size;
-        result[1] = ((index % resolution.width) != resolution.width - 1) ? index + 1 : size;
-        result[2] = (index >= resolution.width) ? index - resolution.width : size;
-        result[3] = ((index % resolution.width) != 0) ? index + 1 : size;
+        result[0] = (index < (resoY-1)*resoX) ? index+resoX : size;
+        result[1] = ((index % resoX) != resoX - 1) ? index + 1 : size;
+        result[2] = (index >= resoX) ? index - resoX : size;
+        result[3] = ((index % resoX) != 0) ? index + 1 : size;
         return result;
     }
 
@@ -243,34 +245,34 @@ public class Map
 
         for (int i = 1; i < size; i++)
         {
-            if (i == resolution.width - 1) { new bool4(true, false, false, true); }
-            else if (i == (resolution.height - 1) * resolution.width) { validDirMap[i] = new bool4(false, true, true, false); }
+            if (i == resoX - 1) { new bool4(true, false, false, true); }
+            else if (i == (resoY - 1) * resoX) { validDirMap[i] = new bool4(false, true, true, false); }
             else if(i == size - 1) { validDirMap[i] = new bool4(false, false, true, true); }
-            else if(i >= 1 && i < resolution.width - 1) { validDirMap[i] = new bool4(true, true, false, true); }
-            else if (i >= (resolution.height - 1) * resolution.width + 1 && i < size - 1) { validDirMap[i] = new bool4(false, true, true, true); }
-            else if (i % resolution.width == 0) { validDirMap[i] = new bool4(true, true, true, false); }
-            else if (i % resolution.width == resolution.width - 1) { validDirMap[i] = new bool4(true, false, true, true); }
+            else if(i >= 1 && i < resoX - 1) { validDirMap[i] = new bool4(true, true, false, true); }
+            else if (i >= (resoY - 1) * resoX + 1 && i < size - 1) { validDirMap[i] = new bool4(false, true, true, true); }
+            else if (i % resoX == 0) { validDirMap[i] = new bool4(true, true, true, false); }
+            else if (i % resoX == resoX - 1) { validDirMap[i] = new bool4(true, false, true, true); }
             else { validDirMap[i] = initValue; }
         }
     }
 
     public int GetPositionIndex(Vector2Int position)
     {
-        return resolution.width*(position.y-1) + position.x - 1;
+        return resoX*(position.y-1) + position.x - 1;
     }
 
     public Vector2Int GetIndexPosition(int index)
     {
-        int y = (int)(index / resolution.width) + 1;
-        return new Vector2Int(index-(y-1)*resolution.width+1, y);
+        int y = (int)(index / resoX) + 1;
+        return new Vector2Int(index-(y-1)*resoX+1, y);
     }
 
     private bool IsPositionValid(Vector2Int position)
     {
         if (position.x < 1) { return false; }
         else if (position.y < 1) {  return false; }
-        else if (position.x > resolution.width) { return false; }
-        else if (position.y > resolution.height) {  return false; }
+        else if (position.x > resoX) { return false; }
+        else if (position.y > resoY) {  return false; }
         return true;
     }
 }
