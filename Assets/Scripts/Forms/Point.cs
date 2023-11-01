@@ -1,21 +1,57 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Point
 {
-    public int fractionId;
+    public int fraction;
     public Vector2Int position { get; private set; }
-    public int index { get; private set; }
 
+    public Point[] neighbours;
+    public bool isEmpty;
 
-    public Point(Vector2Int position, int fractionId, int index)
+    private float expansionRate;
+    private float conquerRate;
+    private float defenseValue;
+
+    public float[] interference;
+    public int[] interferenceFraction;
+
+    public Point(Vector2Int position, int fraction)
     {
         this.position = position;
-        this.fractionId = fractionId;
-        this.index = index;
+        this.fraction = fraction;
+        isEmpty = true;
+    }
+
+    public void Interact()
+    {
+        for (int i = 0; i < neighbours.Length; i++)
+        {
+            int direction = (i + 2) % 4;
+            if (neighbours[i].isEmpty)
+            {
+                interference[direction] = expansionRate;
+            }
+            else
+            {
+                interference[direction] = conquerRate;
+            }
+            interferenceFraction[direction] = fraction;
+        }
+    }
+
+    public void Evaluate()
+    {
+        float attackValue;
+
     }
 }
+
+
+
+
 
 [System.Serializable]
 public struct Vector2Int
