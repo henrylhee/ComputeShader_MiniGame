@@ -15,9 +15,9 @@ MonoBehaviour:
   _name: B
   color: {r: 0.070053875, g: 0.5471698, b: 0.017550694, a: 0}
   startPosition:
-    x: 600
-    y: 600
-  conquerRate: 0
+    x: 400
+    y: 400
+  conquerRate: 0.179
   expansionRate: 0.249
   expansionRange: 0
   sharpness: 0
