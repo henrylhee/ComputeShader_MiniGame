@@ -17,7 +17,7 @@ MonoBehaviour:
   startPosition:
     x: 900
     y: 900
-  conquerRate: 0.171
+  conquerRate: 0
   expansionRate: 0.126
   expansionRange: 0
   sharpness: 0
