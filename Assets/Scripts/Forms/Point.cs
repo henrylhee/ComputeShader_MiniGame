@@ -1,30 +1,47 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using Unity.Mathematics;
+using Random = UnityEngine.Random;
 using UnityEngine;
+using System.Net;
+
+public struct Byte4
+{
+    public byte x;
+    public byte y;
+    public byte z;
+    public byte w;
+
+    public Byte4(byte x, byte y, byte z, byte w)
+    {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.w = w;
+    }
+}
 
 public class Point
 {
-    public int faction;
-    public int[] neighbourIndices;
-    public int index;
+    public byte faction = new byte();
+    public int[] neighbourIndices = new int[4];
+    public int index = new int();
 
 
-    public int invalidIndex;
-    public int successfulNeighbourDir;
+    public int invalidIndex = new int();
+    public byte successfulNeighbourDir = new byte();
 
-    private float expansionRate;
-    private float conquerRate;
-    private float defenseValue;
+    public float4 impactValues = new float4();
+    public byte[] impactFactions = new byte[4];
 
-    public float[] interference;
-    public int[] interferenceFaction;
-
-    public Point(int index, int faction, int[] neighbourIndices)
+    public Point(int index, byte faction, int[] neighbourIndices, int invalidIndex)
     {
         this.index = index;
         this.faction = faction;
         this.neighbourIndices = neighbourIndices;
+        this.invalidIndex = invalidIndex;
     }
 
     //private IEnumerable<Vector2Int> Neighbours()
@@ -35,43 +52,47 @@ public class Point
     //    yield return new Vector2Int(position.x-1, position.y);
     //}
 
-    public void Interact(Point[] points)
+    public void Interact(ref Point[] points)
     {
         if (faction == 0) return;
-        int neighbourIndex;
-
-        for (int direction = 0; direction < neighbourIndices.Length; direction++)
+        for(int direction = 0; direction<4;direction++) 
         {
-            neighbourIndex = neighbourIndices[direction];
-            if (neighbourIndex == invalidIndex) continue;
+            int neighbourIndex = neighbourIndices[direction];
 
-            if (points[neighbourIndex].faction == 0)
+            if (neighbourIndex != invalidIndex)
             {
-                //interference[-->(direction+2)%4]!!!!!!!!!!!!!!!!!!!!!!!!!!!calculation 1 time instead of 4!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                points[neighbourIndex].interference[direction] = Random.Range(0f, FactionSettings[faction].expansionRate);
+                if (points[neighbourIndex].faction == 0)
+                {
+                    //interference[-->(direction+2)%4]!!!!!!!!!!!!!!!!!!!!!!!!!!!calculation 1 time instead of 4!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    points[neighbourIndex].impactValues[direction] = Random.Range(0f, GlobalSettings.Instance.factionSettings[faction].ExpansionRate);
+                }
+                else
+                {
+                    points[neighbourIndex].impactValues[direction] = Random.Range(0f, GlobalSettings.Instance.factionSettings[faction].ConquerRate);
+                }
+                points[neighbourIndex].impactFactions[direction] = faction;
             }
-            else
-            {
-                points[neighbourIndex].interference[direction] = Random.Range(0f, FactionSettings[faction].conquerRate);
-            }
-            points[neighbourIndex].interferenceFaction[direction] = faction;
         }
     }
 
-    public void Evaluate()
+    public void Evaluate(Color[] colorMap)
     {
-        float attackValue = 0;
-        for (int i = 0; i < interference.Length; i++)
+        float maxImpact = 0;
+        Debug.Log("-------------------------->Evaluate: ");
+        for (byte i = 0; i < 4; i++)
         {
-            attackValue = interference[i];
-            if (attackValue > interference[i])
+            Debug.Log("Impact value: " + impactValues[i]);
+            maxImpact = impactValues[i];
+            if (maxImpact < impactValues[i])
             {
                 successfulNeighbourDir = i;
             }
         }
-        if (attackValue == 0) { return; }
-        faction = interferenceFaction[(successfulNeighbourDir+2)%4];
-        colorMap[index] = FactionSettings[faction].color;
+        if (maxImpact == 0) { return; }
+
+        faction = impactFactions[(successfulNeighbourDir+2)%4];
+        colorMap[index] = GlobalSettings.Instance.factionSettings[faction].Color;
+        Debug.Log("Point activated! Index: " + faction);
     }
 }
 

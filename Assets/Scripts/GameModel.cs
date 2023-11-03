@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using Unity.VisualScripting;
 using UnityEditor.U2D.Aseprite;
 using UnityEngine;
 using UnityEngine.Events;
@@ -24,7 +26,6 @@ public class GameModel
     public UnityEvent OnStatesUpdated;
 
     public Map map { get; private set; }
-    public Fractions fractions { get; private set; }
 
     //Input
     private Vector2 mousePosition;
@@ -33,16 +34,14 @@ public class GameModel
     public Resolution resolution { get; private set; }
 
 
-    public void Initialize(List<FractionSettings> fractionSettings)
+    public void Initialize()
     {
         resolution = Screen.currentResolution;
-        fractions = new Fractions();
         map = new Map();
         OnStatesUpdated = new UnityEvent();
 
-        fractions.Initialize(fractionSettings);
-        map.Initialize(fractions.settings);
-
+        map.Initialize();
+        Point point = new Point(1,1,new int[4], 3);
         Debug.Log("GameModel initialized.");
     }
 

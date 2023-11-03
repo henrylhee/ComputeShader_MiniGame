@@ -10,7 +10,8 @@ public class Game : MonoBehaviour
 {
     Controller controller;
     [SerializeField]
-    List<FractionSettings> fractionSettings;
+    List<FactionObject> factionObjects;
+    List<FactionSettings> factionSettingsList;
     float time;
     float updateTime;
     float fps;
@@ -18,8 +19,8 @@ public class Game : MonoBehaviour
     private void Awake()
     {
         Initialize();
-        time = 0;
-        updateTime = 0.1f;
+        time = Time.time;
+        updateTime = 1f;
         fps = 0;
     }
 
@@ -32,8 +33,13 @@ public class Game : MonoBehaviour
     {
         fps = 1f / Time.deltaTime;
         if (fps < 20) { Application.Quit(); }
-        GameModel.Instance.Update();
 
+        if (time < Time.time - updateTime)
+        {
+            GameModel.Instance.Update();
+            time = Time.time;
+        }
+        
         //time += Time.deltaTime;
         //if (time > updateTime)
         //{
@@ -45,7 +51,17 @@ public class Game : MonoBehaviour
 
     private void Initialize()
     {
-        GameModel.Instance.Initialize(fractionSettings);
+        factionSettingsList = new List<FactionSettings>();
+        for (byte index = 0; index < factionObjects.Count; index++)
+        {
+            FactionSettings factionSettings = new FactionSettings();
+            factionSettings.Initialize(factionObjects[index], index);
+            factionSettingsList.Add(factionSettings);
+        }
+
+        GlobalSettings.Instance.Initialize(factionSettingsList);
+        
+        GameModel.Instance.Initialize();
 
         controller = this.AddComponent<Controller>();
         controller.Initialize();

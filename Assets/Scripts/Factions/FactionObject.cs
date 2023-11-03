@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "DefineFaction", menuName = "Factions")]
+[CreateAssetMenu(fileName = "FactionName", menuName = "Factions/Create faction object")]
 public class FactionObject : ScriptableObject
 {
     [SerializeField]
@@ -29,9 +29,6 @@ public class FactionObject : ScriptableObject
     [SerializeField]
     float stability;
     public float Stability { get => stability;}
-    //[SerializeField, Range(0f,1f)]
-    //float splitChance;
-    //public float SplitChance { get => splitChance;}
     [SerializeField]
     float randomness;
     public float Randomness { get => randomness;}
