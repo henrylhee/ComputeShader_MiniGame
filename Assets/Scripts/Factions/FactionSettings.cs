@@ -32,10 +32,10 @@ public class FactionSettings
     private float randomness;
     public float Randomness { get => randomness; }
 
-    public byte id { get; private set; }
+    public int id { get; private set; }
 
 
-    public void Initialize(FactionObject faction, byte id)
+    public void Initialize(FactionObject faction, int id)
     {
         _name = faction._Name;
         color = faction.Color;

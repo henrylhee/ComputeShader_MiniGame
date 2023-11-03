@@ -41,7 +41,6 @@ public class GameModel
         OnStatesUpdated = new UnityEvent();
 
         map.Initialize();
-        Point point = new Point(1,1,new int[4], 3);
         Debug.Log("GameModel initialized.");
     }
 

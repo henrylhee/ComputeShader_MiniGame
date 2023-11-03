@@ -25,23 +25,23 @@ public struct Byte4
 
 public class Point
 {
-    public byte faction = new byte();
-    public int[] neighbourIndices = new int[4];
+    public int faction = new int();
     public int index = new int();
-
-
+    public Point[] neighbours;
     public int invalidIndex = new int();
-    public byte successfulNeighbourDir = new byte();
+
+
+    public int successfulNeighbourDir = new int();
 
     public float4 impactValues = new float4();
-    public byte[] impactFactions = new byte[4];
+    public int[] impactFactions = new int[4];
 
-    public Point(int index, byte faction, int[] neighbourIndices, int invalidIndex)
+    public Point(int index, int faction, int invalidIndex)
     {
         this.index = index;
         this.faction = faction;
-        this.neighbourIndices = neighbourIndices;
         this.invalidIndex = invalidIndex;
+        neighbours = new Point[4];
     }
 
     //private IEnumerable<Vector2Int> Neighbours()
@@ -52,52 +52,72 @@ public class Point
     //    yield return new Vector2Int(position.x-1, position.y);
     //}
 
-    public void Interact(ref Point[] points)
+    public void GetNeighbours(Point[] neighbours)
+    {
+        for(int i = 0; i < 4;i++)
+        {
+            this.neighbours[i] = neighbours[i];
+        }
+    }
+
+    public void Interact()
     {
         if (faction == 0) return;
+        Debug.Log("########### Faction #######"+faction);
         for(int direction = 0; direction<4;direction++) 
         {
-            int neighbourIndex = neighbourIndices[direction];
-
-            if (neighbourIndex != invalidIndex)
+            Debug.Log(direction + "---"+neighbours[direction]);
+            if (neighbours[direction] != null)
             {
-                if (points[neighbourIndex].faction == 0)
+                if (neighbours[direction].faction == 0)
                 {
                     //interference[-->(direction+2)%4]!!!!!!!!!!!!!!!!!!!!!!!!!!!calculation 1 time instead of 4!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    points[neighbourIndex].impactValues[direction] = Random.Range(0f, GlobalSettings.Instance.factionSettings[faction].ExpansionRate);
+                    neighbours[direction].impactValues[direction] = Random.Range(0f, GlobalSettings.Instance.factionSettings[faction-1].ExpansionRate);
+                    Debug.Log(direction +" -> Set impactvalue for EMPTY field: " + neighbours[direction].impactValues[direction]);
                 }
                 else
                 {
-                    points[neighbourIndex].impactValues[direction] = Random.Range(0f, GlobalSettings.Instance.factionSettings[faction].ConquerRate);
+                    neighbours[direction].impactValues[direction] = Random.Range(0f, GlobalSettings.Instance.factionSettings[faction-1].ConquerRate);
+                    Debug.Log(direction + " -> Set impactvalue for ACTIVE field: " + neighbours[direction].impactValues[direction]);
                 }
-                points[neighbourIndex].impactFactions[direction] = faction;
+                Debug.Log("impactfaction before setting: "+neighbours[direction].impactFactions[direction]);
+                neighbours[direction].impactFactions[direction] = faction;
+                Debug.Log("impactfaction after setting: " + neighbours[direction].impactFactions[direction]);
             }
         }
     }
 
-    public void Evaluate(Color[] colorMap)
+    public void Evaluate(ref Color[] colorMap)
     {
         float maxImpact = 0;
-        Debug.Log("-------------------------->Evaluate: ");
-        for (byte i = 0; i < 4; i++)
+        //Debug.Log("-------------------------->Evaluate: ");
+        for (int i = 0; i < 4; i++)
         {
-            Debug.Log("Impact value: " + impactValues[i]);
             maxImpact = impactValues[i];
             if (maxImpact < impactValues[i])
             {
+                //Debug.Log("Impact value: " + impactValues[i]);
                 successfulNeighbourDir = i;
             }
         }
         if (maxImpact == 0) { return; }
 
-        faction = impactFactions[(successfulNeighbourDir+2)%4];
+        faction = impactFactions[((successfulNeighbourDir+2)%4)];
+        Debug.Log("index: " + index + "faction: " + (faction-1) + "--->"+ impactFactions[((successfulNeighbourDir + 2) % 4)]);
+        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!faction - 1
         colorMap[index] = GlobalSettings.Instance.factionSettings[faction].Color;
-        Debug.Log("Point activated! Index: " + faction);
+        //Debug.Log("Point activated! Index: " + faction + ". Color value: " + colorMap[index]);
     }
 }
 
-
-
+public class ColorMapHolder
+{
+    public Color[] colorMap;
+    public ColorMapHolder(int size)
+    {
+        colorMap = new Color[size];
+    }
+}
 
 
 [System.Serializable]

@@ -14,7 +14,7 @@ public class Map
     //problems to tackle: order of executions in pointlist???
 
 
-    public Color[] colorMap { get; private set; }
+    public Color[] colorMap;
     private Point[] points;
 
     public int[] ids { get; private set; }
@@ -42,14 +42,45 @@ public class Map
 
         colorMap = new Color[size];
         ids = new int[size];
+        colorMap = new Color[size];
+        
         for (int i = 0; i < size; i++)
         {
             colorMap[i] = initColor;
             ids[i] = emptyId;
-            points[i] = new Point(i, 0, GetNeighbourIndices(i), size);
+            points[i] = new Point(i, 0, size);
         }
-        Debug.Log("points: " + points.Length);
+
         GenerateStartPositions();
+
+        Point[] neighbours = new Point[4];
+        int[] neighbourIndices;
+        for (int i = 0; i < size; i++)
+        {
+            neighbourIndices = GetNeighbourIndices(i);
+            for (int j = 0; j < 4; j++)
+            {
+                if (neighbourIndices[j] != size)
+                {
+                    neighbours[j] = points[neighbourIndices[j]];
+                }
+                else
+                {
+                    neighbours[j] = null;
+                }
+            }
+            
+            points[i].GetNeighbours(neighbours);
+            //if (points[i].faction != 0)
+            //{
+            //    foreach (Point neighbour in points[i].neighbours)
+            //    {
+            //        Debug.Log(neighbour);
+            //    }
+            //}
+        }
+
+        Debug.Log("points: " + points.Length);
     }
 
     private void GenerateStartPositions()
@@ -58,19 +89,29 @@ public class Map
         {
             int index = GetPositionIndex(settings.StartPosition);
             points[index].faction = settings.id;
+            colorMap[index] = settings.Color;
+            Debug.Log("faction " + settings.id);
         }
     }
 
     public void Update()
     {
         Debug.Log("update");
-        foreach(Point point in points)
+        //for(int i = 0;i < 20*resoX;i++)
+        //{
+        //    points[i].Interact();
+        //}
+        //for (int i = 0; i < 20 * resoX; i++)
+        //{
+        //    points[i].Evaluate(ref colorMap);
+
+        foreach (Point point in points)
         {
-            point.Interact(ref points);
+            point.Interact();
         }
         foreach (Point point in points)
         {
-            point.Evaluate(colorMap);
+            point.Evaluate(ref colorMap);
         }
     }
 

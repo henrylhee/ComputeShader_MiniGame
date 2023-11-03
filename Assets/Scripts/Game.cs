@@ -52,10 +52,10 @@ public class Game : MonoBehaviour
     private void Initialize()
     {
         factionSettingsList = new List<FactionSettings>();
-        for (byte index = 0; index < factionObjects.Count; index++)
+        for (int index = 1; index <= factionObjects.Count; index++)
         {
             FactionSettings factionSettings = new FactionSettings();
-            factionSettings.Initialize(factionObjects[index], index);
+            factionSettings.Initialize(factionObjects[index-1], index);
             factionSettingsList.Add(factionSettings);
         }
 
@@ -68,6 +68,4 @@ public class Game : MonoBehaviour
 
         Debug.Log("Game initialized.");
     }
-
-    
 }
