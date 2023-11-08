@@ -20,7 +20,7 @@ public class Game : MonoBehaviour
     {
         Initialize();
         time = Time.time;
-        updateTime = 1f;
+        updateTime = .5f;
         fps = 0;
     }
 
@@ -36,10 +36,11 @@ public class Game : MonoBehaviour
 
         if (time < Time.time - updateTime)
         {
-            GameModel.Instance.Update();
             time = Time.time;
         }
-        
+        GameModel.Instance.Update();
+
+
         //time += Time.deltaTime;
         //if (time > updateTime)
         //{
@@ -52,7 +53,11 @@ public class Game : MonoBehaviour
     private void Initialize()
     {
         factionSettingsList = new List<FactionSettings>();
-        for (int index = 1; index <= factionObjects.Count; index++)
+        FactionSettings dummy = new FactionSettings();
+        dummy.Initialize(new FactionObject(),0);
+        factionSettingsList.Add(dummy);
+
+        for (short index = 1; index <= factionObjects.Count; index++)
         {
             FactionSettings factionSettings = new FactionSettings();
             factionSettings.Initialize(factionObjects[index-1], index);

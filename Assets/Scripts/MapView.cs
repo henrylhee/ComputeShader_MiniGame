@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public class MapView : MonoBehaviour
 {
+    RenderTexture renderTexture;
 
     [SerializeField] Color mouseColor;
     [SerializeField] Color emptyColor;
@@ -36,7 +37,6 @@ public class MapView : MonoBehaviour
         image = GetComponent<RawImage>();
 
         GameModel.Instance.OnStatesUpdated.AddListener(UpdateView);
-        colorTexture.SetPixels(GameModel.Instance.map.colorMap, 0);
         colorTexture.Apply();
         //image.texture = colorTexture;
 
@@ -44,11 +44,19 @@ public class MapView : MonoBehaviour
         Debug.Log("Mapview initialized.");
     }
 
+    private void OnRenderImage(RenderTexture source, RenderTexture destination)
+    {
+
+
+        Graphics.Blit(renderTexture, destination);
+    }
+
     private void UpdateView()
     {
-        colorTexture.SetPixels(GameModel.Instance.map.colorMap, 0);
-        colorTexture.Apply();
-        UpdateShader();
+        //colorTexture.SetPixels(GameModel.Instance.map.colorMap, 0);
+        //colorTexture.Apply();
+        //UpdateShader();
+        renderTexture = GameModel.Instance.map.renderTexture;
     }
 
     private void InitializeShader()

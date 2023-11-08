@@ -282,6 +282,7 @@ GameObject:
   - component: {fileID: 519420032}
   - component: {fileID: 519420031}
   - component: {fileID: 519420029}
+  - component: {fileID: 519420033}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -363,6 +364,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &519420033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ddc1bb0cbbe25546aa98420c8ed0b2c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rendertexture: {fileID: 0}
 --- !u!1 &921514935
 GameObject:
   m_ObjectHideFlags: 0
@@ -460,11 +474,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf52541ffb9a04b4d8d9409b74d83e8f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fractionSettings:
+  factionObjects:
   - {fileID: 11400000, guid: e784141c61a0b7149a0230c63f703523, type: 2}
   - {fileID: 11400000, guid: 4c3b628f446e29d46a23ce420265514b, type: 2}
-  - {fileID: 11400000, guid: 94ed4fd9037b3204c9705ca7e509f3c4, type: 2}
   - {fileID: 11400000, guid: 84f51db9053bed446b0992a2381f637e, type: 2}
+  - {fileID: 11400000, guid: 94ed4fd9037b3204c9705ca7e509f3c4, type: 2}
 --- !u!4 &926986588
 Transform:
   m_ObjectHideFlags: 0
@@ -500,7 +514,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1235421782
 RectTransform:
   m_ObjectHideFlags: 0
@@ -588,7 +602,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1689815271
 RectTransform:
   m_ObjectHideFlags: 0

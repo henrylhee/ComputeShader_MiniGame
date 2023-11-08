@@ -1,0 +1,147 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Interact
+
+#pragma kernel Evaluate
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+
+// ############## constant ###########
+int threadCountX;
+int threadCountY;
+int resoX;
+int resoY;
+int indexCount;
+
+struct FactionSettings
+{
+    float conquerRate;
+    float conquerStrength;
+    float expansionRate;
+    float expansionStrength;
+    float4 color;
+};
+StructuredBuffer<FactionSettings> factionDatabuffer;
+
+
+// ######### read/write data ############
+struct Point
+{
+    int index;
+    int faction;
+    bool isActive;
+    int4 neighbourIndices;
+};
+RWStructuredBuffer<Point> pointsBuffer;
+
+RWBuffer<float4> impactValuesBuffer;
+
+RWTexture2D<float4> colorTexture;
+
+
+
+
+[numthreads(8,8,1)]
+void Interact (uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= resoX || id.y >= resoY)
+    {
+        return;
+    }
+    
+    int index = id.y * resoX + id.x;
+    float2 st = float2(id.x/threadCountX, id.y/threadCountX);
+    int faction = pointsBuffer[index].faction;
+    
+    if (faction == 0 || pointsBuffer[index].isActive == false)
+    {
+        return;
+    }
+    
+    float value = frac(sin(dot(st.xy, float2(12.9898, 78.233))) * 43758.5453123);
+    
+    for (int direction = 0; direction < 4; direction++)
+    {
+        int neighbourIndex = pointsBuffer[index].neighbourIndices[direction];
+        if (neighbourIndex != indexCount)
+        {
+            if (pointsBuffer[neighbourIndex].faction == 0)
+            {
+                if (value < factionDatabuffer[faction].expansionRate)
+                {
+                    impactValuesBuffer[neighbourIndex][direction] = factionDatabuffer[faction].expansionStrength;
+                }
+            }
+            else
+            {
+                if (value < factionDatabuffer[faction].conquerRate)
+                {
+                    impactValuesBuffer[neighbourIndex][direction] = factionDatabuffer[faction].conquerStrength;
+                }
+            }
+            pointsBuffer[neighbourIndex].isActive = true;
+        }
+    }
+}
+
+[numthreads(8,8,1)]
+void Evaluate(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= resoX || id.y >= resoY)
+    {
+        return;
+    }
+    
+    int index = id.y * resoX + id.x;
+    
+    if (pointsBuffer[index].isActive == false)
+    {
+        return;
+    }
+    
+    int faction = pointsBuffer[index].faction;
+    int4 neighbourIndices = pointsBuffer[index].neighbourIndices;
+    bool isActive = false;
+    
+    for (int i = 0; id < 4; id++)
+    {
+        int neighbourIndex = neighbourIndices[i];
+        if (neighbourIndex == indexCount)
+        {
+            continue;
+        }
+        if (pointsBuffer[neighbourIndex].faction != faction)
+        {
+            isActive = true;
+            break;
+        }
+    }
+    if (isActive == false)
+    {
+        pointsBuffer[index].isActive = false;
+        return;
+    }
+    
+    float4 impactValues = impactValuesBuffer[index];
+    float maxImpact = impactValues[0];
+    int successfulneighbourDir = 0;
+    for (int i = 1; i < 4; i++)
+    {
+        if (maxImpact < impactValues[i])
+        {
+            maxImpact = impactValues[i];
+            successfulneighbourDir = i;
+        }
+    }
+    if (maxImpact == 0)
+    {
+        return;
+    }
+    int newFaction = pointsBuffer[neighbourIndices[(successfulneighbourDir + 2) % 4]].faction;
+    
+    pointsBuffer[index].faction = newFaction;
+    int y = floor(index / resoX);
+    int x = index - resoX * y;
+    colorTexture[x, y] = factionDatabuffer[newFaction].color;
+}
+

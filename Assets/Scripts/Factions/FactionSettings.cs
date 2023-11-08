@@ -17,8 +17,14 @@ public class FactionSettings
     private float conquerRate;
     public float ConquerRate { get => conquerRate; }
     [SerializeField]
+    private float conquerStrength;
+    public float ConquerStrength { get => conquerStrength; }
+    [SerializeField]
     private float expansionRate;
     public float ExpansionRate { get => expansionRate; }
+    [SerializeField]
+    private float expansionStrength;
+    public float ExpansionStrength { get => expansionStrength; }
     [SerializeField]
     private float expansionRange;
     public float ExpansionRange { get => expansionRange; }
@@ -32,16 +38,18 @@ public class FactionSettings
     private float randomness;
     public float Randomness { get => randomness; }
 
-    public int id { get; private set; }
+    public short id { get; private set; }
 
 
-    public void Initialize(FactionObject faction, int id)
+    public void Initialize(FactionObject faction, short id)
     {
         _name = faction._Name;
         color = faction.Color;
         startPosition = faction.StartPosition;
         conquerRate = faction.ConquerRate;
+        conquerStrength = faction.ConquerStrength;
         expansionRate = faction.ExpansionRate;
+        expansionStrength = faction.ExpansionStrength;
         expansionRange = faction.ExpansionRange;
         sharpness = faction.Sharpness;
         stability = faction.Stability;
