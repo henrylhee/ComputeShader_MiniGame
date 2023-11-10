@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
 public class FactionSettings
 {
     [SerializeField]
@@ -13,16 +14,16 @@ public class FactionSettings
     [SerializeField]
     private Vector2Int startPosition;
     public Vector2Int StartPosition { get => startPosition;}
-    [SerializeField]
+    [SerializeField, Range(0, 0.2f)]
     private float conquerRate;
     public float ConquerRate { get => conquerRate; }
-    [SerializeField]
+    [SerializeField,Range(0,0.2f)]
     private float conquerStrength;
     public float ConquerStrength { get => conquerStrength; }
-    [SerializeField]
+    [SerializeField, Range(0, 0.2f)]
     private float expansionRate;
     public float ExpansionRate { get => expansionRate; }
-    [SerializeField]
+    [SerializeField, Range(0, 0.2f)]
     private float expansionStrength;
     public float ExpansionStrength { get => expansionStrength; }
     [SerializeField]

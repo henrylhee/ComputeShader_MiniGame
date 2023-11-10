@@ -18,7 +18,9 @@ MonoBehaviour:
     x: 1400
     y: 800
   conquerRate: 0.107
-  expansionRate: 0.74
+  conquerStrength: 0.309
+  expansionRate: 0.242
+  expansionStrength: 0.624
   expansionRange: 0
   sharpness: 0
   stability: 0

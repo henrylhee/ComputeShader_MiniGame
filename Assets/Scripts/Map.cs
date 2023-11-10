@@ -16,9 +16,16 @@ public class Map
     private ComputeShader setupShader;
     public RenderTexture renderTexture;
 
-    ComputeBuffer factionDataBuffer;
-    ComputeBuffer pointsBuffer;
-    ComputeBuffer impactValuesBuffer;
+    public ComputeBuffer factionDataBuffer;
+    public ComputeBuffer pointsBuffer;
+    public ComputeBuffer impactValuesBuffer;
+
+    public ComputeBuffer test;
+    public ComputeBuffer timeSeedBuffer;
+
+    float4S[] t;
+
+    float timeSeed = 0;
 
     Point[] points;
     float[] impactValues;
@@ -31,7 +38,6 @@ public class Map
 
     private int threadGroupsX;
     private int threadGroupsY;
-
 
 
 
@@ -48,19 +54,7 @@ public class Map
         Debug.Log("array size: " + size);
 
 
-        factionCount = GlobalSettings.Instance.factionSettings.Count;
-        factionData = new FactionData[factionCount];
-        factionData[0] = new FactionData();
-        for (int i = 1; i < factionCount; i++)
-        {
-            FactionSettings factionSettings = GlobalSettings.Instance.factionSettings[i];
-            factionData[i] = new FactionData();
-            factionData[i].conquerRate = factionSettings.ConquerRate;
-            factionData[i].conquerStrength = factionSettings.ConquerStrength;
-            factionData[i].expansionRate = factionSettings.ExpansionRate;
-            factionData[i].expansionStrength = factionSettings.ExpansionStrength;
-            factionData[i].color = factionSettings.Color;
-        }
+        SetFactionData();
 
         points = new Point[size];
         impactValues = new float[size*4];
@@ -84,15 +78,26 @@ public class Map
     }
     public void Update()
     {
+        timeSeed += Time.deltaTime;
         ComputeShaderUpdate();
     }
 
     private void ComputeShaderUpdate()
     {
+        computeShader.SetFloat("timeSeed", timeSeed);
         computeShader.SetInt("hasInteracted", 0);
         computeShader.Dispatch(0, threadGroupsX, threadGroupsY, 1);
         computeShader.SetInt("hasInteracted", 1);
         computeShader.Dispatch(0, threadGroupsX, threadGroupsY, 1);
+        test.GetData(t);
+        //Debug.Log("-->>"+points[0].neighbourIndices.x);
+        //Debug.Log(points[0].neighbourIndices.y);
+        //Debug.Log(points[0].neighbourIndices.z);
+        //Debug.Log(points[0].neighbourIndices.w);
+        Debug.Log("#### Time seed: ####"+t[0].x);
+        Debug.Log("#### random value: ####" + t[0].y);
+        Debug.Log(t[0].z);
+        //Debug.Log(t[0].w);
     }
 
 
@@ -102,13 +107,18 @@ public class Map
         renderTexture.enableRandomWrite = true;
         renderTexture.Create();
 
-        ComputeShader setupShader = Resources.Load<ComputeShader>("Shader/setupShader");
+        Debug.Log("Initialize rendertexture");
+        ComputeShader setupShader = Resources.Load<ComputeShader>("Shader/SetupShader");
+        setupShader.SetInt("resoX", resoX);
+        setupShader.SetInt("resoY", resoY);
+        setupShader.SetVector("initColor", new Color(0,0,0,1));
         setupShader.SetTexture(0, "result", renderTexture);
         setupShader.Dispatch(0,threadGroupsX,threadGroupsY,1);
     }
 
     private void InitializeComputeShader()
     {
+        Debug.Log("Initialize compute shader");
         computeShader = Resources.Load<ComputeShader>("Shader/Interact");
 
         pointsBuffer = new ComputeBuffer(size, sizeof(int) * 8);
@@ -120,8 +130,14 @@ public class Map
         factionDataBuffer = new ComputeBuffer(factionCount, sizeof(float) * 8);
         factionDataBuffer.SetData(factionData);
 
-        computeShader.SetInt("ResoX", resoX);
-        computeShader.SetInt("ResoY", resoY);
+        test = new ComputeBuffer(1, sizeof(float)*4);
+        t = new float4S[1];
+        t[0] = new float4S(0, 0, 0, 0);
+        test.SetData(t);
+
+        
+        computeShader.SetInt("resoX", resoX);
+        computeShader.SetInt("resoY", resoY);
         computeShader.SetInt("threadCountX", threadGroupsX * 8);
         computeShader.SetInt("threadCountY", threadGroupsY * 8);
         computeShader.SetInt("indexCount", size);
@@ -130,6 +146,7 @@ public class Map
         computeShader.SetBuffer(0, "factionDataBuffer", factionDataBuffer);
         computeShader.SetBuffer(0, "pointsBuffer", pointsBuffer);
         computeShader.SetBuffer(0, "impactValuesBuffer", impactValuesBuffer);
+        computeShader.SetBuffer(0, "test", test);
     }
 
     private void GenerateStartPositions()
@@ -166,5 +183,44 @@ public class Map
     {
         return Mathf.CeilToInt(reso / numThreads);
     }
+
+    public void UpdateSettings()
+    {
+        SetFactionData();
+        factionDataBuffer.SetData(factionData);
+        computeShader.SetBuffer(0, "factionDataBuffer", factionDataBuffer);
+    }
+
+    private void SetFactionData()
+    {
+        factionCount = GlobalSettings.Instance.factionSettings.Count;
+        factionData = new FactionData[factionCount];
+        factionData[0] = new FactionData();
+        for (int i = 1; i < factionCount; i++)
+        {
+            FactionSettings factionSettings = GlobalSettings.Instance.factionSettings[i];
+            factionData[i] = new FactionData();
+            factionData[i].conquerRate = factionSettings.ConquerRate;
+            factionData[i].conquerStrength = factionSettings.ConquerStrength;
+            factionData[i].expansionRate = factionSettings.ExpansionRate;
+            factionData[i].expansionStrength = factionSettings.ExpansionStrength;
+            factionData[i].color = factionSettings.Color;
+        }
+    }
 }
 
+
+public struct float4S
+{
+    public float x;
+    public float y;
+    public float z;
+    public float w;
+    public float4S(float x, float y, float z, float w)
+    {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.w = w;
+    }
+}

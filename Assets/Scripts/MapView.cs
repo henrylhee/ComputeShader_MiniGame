@@ -37,10 +37,11 @@ public class MapView : MonoBehaviour
         image = GetComponent<RawImage>();
 
         GameModel.Instance.OnStatesUpdated.AddListener(UpdateView);
+
         colorTexture.Apply();
         //image.texture = colorTexture;
 
-        InitializeShader();
+        //InitializeShader();
         Debug.Log("Mapview initialized.");
     }
 
@@ -48,7 +49,7 @@ public class MapView : MonoBehaviour
     {
         if (renderTexture != null)
         {
-            Graphics.Blit(renderTexture, destination);
+            Graphics.Blit(renderTexture, destination);         
         }
     }
 

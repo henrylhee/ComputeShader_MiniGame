@@ -12,13 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abc9ed2c8418a3a46bff0f265008cace, type: 3}
   m_Name: B
   m_EditorClassIdentifier: 
-  _name: 
+  _name: B
   color: {r: 0, g: 0.8867924, b: 0.20607592, a: 0}
   startPosition:
     x: 800
     y: 200
   conquerRate: 0.607
-  expansionRate: 0.567
+  conquerStrength: 0.194
+  expansionRate: 0.091
+  expansionStrength: 0.176
   expansionRange: 0
   sharpness: 0
   stability: 0

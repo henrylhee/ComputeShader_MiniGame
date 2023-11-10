@@ -11,6 +11,7 @@ public class Game : MonoBehaviour
     Controller controller;
     [SerializeField]
     List<FactionObject> factionObjects;
+    [SerializeField]
     List<FactionSettings> factionSettingsList;
     float time;
     float updateTime;
@@ -34,20 +35,24 @@ public class Game : MonoBehaviour
         fps = 1f / Time.deltaTime;
         if (fps < 20) { Application.Quit(); }
 
-        if (time < Time.time - updateTime)
-        {
-            time = Time.time;
-        }
-        GameModel.Instance.Update();
 
+        GameModel.Instance.Update();
 
         //time += Time.deltaTime;
         //if (time > updateTime)
         //{
         //    GameModel.Instance.Update();
         //    time = 0;
-        //    updateTime = 0.1f;
+        //    updateTime = 0.2f;
         //}
+    }
+
+    private void OnDestroy()
+    {
+        GameModel.Instance.map.factionDataBuffer.Release();
+        GameModel.Instance.map.pointsBuffer.Release();
+        GameModel.Instance.map.impactValuesBuffer.Release();
+        GameModel.Instance.map.test.Release();
     }
 
     private void Initialize()
@@ -72,5 +77,10 @@ public class Game : MonoBehaviour
         controller.Initialize();
 
         Debug.Log("Game initialized.");
+    }
+
+    private void OnValidate()
+    {
+        GameModel.Instance.map.UpdateSettings();
     }
 }

@@ -25,12 +25,15 @@ StructuredBuffer<FactionSettings> factionDataBuffer;
 
 // ######### read/write data ############
 int hasInteracted;
+float timeSeed;
+
 
 struct Point
 {
     int index;
     int faction;
     int isActive;
+    int dummy;
     int4 neighbourIndices;
 };
 RWStructuredBuffer<Point> pointsBuffer;
@@ -40,26 +43,48 @@ RWBuffer<float> impactValuesBuffer;
 RWTexture2D<float4> colorTexture;
 
 
+RWBuffer<float4> test;
+
+
+float rand3dTo1d(float3 value, float3 dotDir = float3(12.9898, 78.233, 37.719))
+{
+	//make value smaller to avoid artefacts
+    float3 smallValue = sin(value);
+	//get scalar value from 3d vector
+    float random = dot(smallValue, dotDir);
+	//make value more random by making it bigger and then taking the factional part
+    random = frac(sin(random) * 143758.5453);
+    return random;
+}
+
+
 [numthreads(8,8,1)]
 void CSMain(int3 id : SV_DispatchThreadID)
 {
     if (hasInteracted == 0)
-    {
+    {   
         if (id.x >= resoX || id.y >= resoY)
         {
             return;
         }
-    
+                ////-------------
+        if (id.x == 99 && id.y == 99)
+        {
+            //test[0] = float4(pointsBuffer[index].faction, impactValuesBuffer[4 * pointsBuffer[index].neighbourIndices[1] + 1], impactValuesBuffer[4 * pointsBuffer[index].neighbourIndices[2] + 2], impactValuesBuffer[4 * pointsBuffer[index].neighbourIndices[3] + 3]);
+            test[0] = float4(timeSeed, 0, hasInteracted, 0);
+        }
+        
+        
         int index = id.y * resoX + id.x;
-        float2 st = float2(id.x/threadCountX, id.y/threadCountX);
+        float2 st = float2((float) id.x / threadCountX, (float) id.y / threadCountX);
         int faction = pointsBuffer[index].faction;
-    
+        
         if (faction == 0 || pointsBuffer[index].isActive == 0)
         {
             return;
         }
-    
-        float value = frac(sin(dot(st.xy, float2(12.9898, 78.233))) * 43758.5453123);
+        
+        float value = rand3dTo1d(float3(st, timeSeed));
     
         for (int direction = 0; direction < 4; direction++)
         {
@@ -90,7 +115,7 @@ void CSMain(int3 id : SV_DispatchThreadID)
         {
             return;
         }
-    
+        
         int index = id.y * resoX + id.x;
     
         if (pointsBuffer[index].isActive == 0)
@@ -98,6 +123,14 @@ void CSMain(int3 id : SV_DispatchThreadID)
             return;
         }
     
+        //###########
+        //if (id.x == 100 && id.y == 99)
+        //{
+        //    test[0] = int4(pointsBuffer[pointsBuffer[index].neighbourIndices.x].isActive, pointsBuffer[pointsBuffer[index].neighbourIndices.y].isActive, pointsBuffer[pointsBuffer[index].neighbourIndices.z].isActive, pointsBuffer[pointsBuffer[index].neighbourIndices.w].isActive); //test[0] + int4(1,0,0,0);
+        //    //test[0] = pointsBuffer[index].neighbourIndices;
+
+        //}
+        
         int faction = pointsBuffer[index].faction;
         int4 neighbourIndices = pointsBuffer[index].neighbourIndices;
         bool isActive = false;
@@ -120,7 +153,7 @@ void CSMain(int3 id : SV_DispatchThreadID)
             pointsBuffer[index].isActive = 0;
             return;
         }
-    
+        
         float maxImpact = impactValuesBuffer[4 * index];
         int successfulneighbourDir = 0;
         for (int j = 1; j < 4; j++)
@@ -131,10 +164,25 @@ void CSMain(int3 id : SV_DispatchThreadID)
                 successfulneighbourDir = j;
             }
         }
+        ////-------------
+        //if (id.x == 100 && id.y == 99)
+        //{
+        //    test[0] = float4(impactValuesBuffer[4 * index], impactValuesBuffer[4 * index + 1], impactValuesBuffer[4 * index + 2], impactValuesBuffer[4 * index + 3]);
+
+        //}
         if (maxImpact == 0)
         {
             return;
         }
+        
+        float2 st = float2((float) id.x / threadCountX, (float) id.y / threadCountX);
+        float defence = rand3dTo1d(float3(st, timeSeed * 2.1));
+        if (defence > maxImpact)
+        {
+            return;
+        }
+        
+        
         else
         {
             for(int i = 0; i < 4; i++)
@@ -147,7 +195,10 @@ void CSMain(int3 id : SV_DispatchThreadID)
         pointsBuffer[index].faction = newFaction;
         int y = floor(index / resoX);
         int x = index - resoX * y;
-        colorTexture[float2(x, y)] = factionDataBuffer[newFaction].color;
+        colorTexture[float2(x, y)] = factionDataBuffer[newFaction].color;     
     }   
 }
+
+
+
 
