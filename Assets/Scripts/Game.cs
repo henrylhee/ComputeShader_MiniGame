@@ -81,6 +81,9 @@ public class Game : MonoBehaviour
 
     private void OnValidate()
     {
-        GameModel.Instance.map.UpdateSettings();
+        if(GameModel.Instance.map != null)
+        {
+            GameModel.Instance.map.UpdateSettings();
+        }
     }
 }
