@@ -54,7 +54,7 @@ public class Game : MonoBehaviour
     {
         factionSettingsList = new List<FactionSettings>();
         FactionSettings dummy = new FactionSettings();
-        dummy.Initialize(new FactionObject(),0);
+        dummy.Initialize(ScriptableObject.CreateInstance<FactionObject>(),0);
         factionSettingsList.Add(dummy);
 
         for (short index = 1; index <= factionObjects.Count; index++)

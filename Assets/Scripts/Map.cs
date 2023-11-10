@@ -20,15 +20,10 @@ public class Map
     ComputeBuffer pointsBuffer;
     ComputeBuffer impactValuesBuffer;
 
-    int kernelHandleInteract;
-    int kernelHandleEvaluate;
-
     Point[] points;
-    float4[] impactValues;
+    float[] impactValues;
     FactionData[] factionData;
     int factionCount;
-
-    public int[] ids { get; private set; }
 
     private int size;
     private int resoX;
@@ -36,10 +31,6 @@ public class Map
 
     private int threadGroupsX;
     private int threadGroupsY;
-
-
-    readonly int[] helperX = new int[4] {0,1,0,-1};
-    readonly int[] helperY = new int[4] {1,0,-1,0};
 
 
 
@@ -56,13 +47,14 @@ public class Map
         Debug.Log("height resolution: " + resoY);
         Debug.Log("array size: " + size);
 
-        InitializeRenderTexture();
 
         factionCount = GlobalSettings.Instance.factionSettings.Count;
         factionData = new FactionData[factionCount];
-        for (int i = 0; i < factionCount; i++)
+        factionData[0] = new FactionData();
+        for (int i = 1; i < factionCount; i++)
         {
             FactionSettings factionSettings = GlobalSettings.Instance.factionSettings[i];
+            factionData[i] = new FactionData();
             factionData[i].conquerRate = factionSettings.ConquerRate;
             factionData[i].conquerStrength = factionSettings.ConquerStrength;
             factionData[i].expansionRate = factionSettings.ExpansionRate;
@@ -71,56 +63,36 @@ public class Map
         }
 
         points = new Point[size];
-        impactValues = new float4[size];
+        impactValues = new float[size*4];
 
-        int emptyId = 0;
-
-        ids = new int[size];
-        
+       
         for (int i = 0; i < size; i++)
         {
-            ids[i] = emptyId;
-            points[i] = new Point(i, 0, false, GetNeighbourIndices(i));
-            impactValues[i] = new float4(0,0,0,0);
+            points[i] = new Point(i, 0, 0, GetNeighbourIndices(i));
+            impactValues[i * 4 + 0] = 0f;
+            impactValues[i * 4 + 1] = 0f;
+            impactValues[i * 4 + 2] = 0f;
+            impactValues[i * 4 + 3] = 0f;
         }
 
         GenerateStartPositions();
 
+        InitializeRenderTexture();
+        InitializeComputeShader();
+
         Debug.Log("points: " + points.Length);
     }
-
-    private void ComputeShaderInteract()
+    public void Update()
     {
-        computeShader.SetInt("ResoX", resoX);
-        computeShader.SetInt("ResoY", resoY);
-        computeShader.SetInt("threadCountX", threadGroupsX*8);
-        computeShader.SetInt("threadCountY", threadGroupsY*8);
-        computeShader.SetInt("indexCount", size);
-        computeShader.SetTexture(kernelHandleInteract, "colorTexture", renderTexture);
-        computeShader.SetBuffer(kernelHandleInteract, "factionDataBuffer", factionDataBuffer);
-        computeShader.SetBuffer(kernelHandleInteract, "pointsBuffer", pointsBuffer);
-        computeShader.SetBuffer(kernelHandleInteract, "impactValuesbuffer", impactValuesBuffer);
-
-        computeShader.Dispatch(kernelHandleInteract, threadGroupsX, threadGroupsY, 1);
-
-        
+        ComputeShaderUpdate();
     }
 
-    private void ComputeShaderEvaluate()
+    private void ComputeShaderUpdate()
     {
-        computeShader.SetInt("ResoX", resoX);
-        computeShader.SetInt("ResoY", resoY);
-        computeShader.SetInt("threadCountX", threadGroupsX * 8);
-        computeShader.SetInt("threadCountY", threadGroupsY * 8);
-        computeShader.SetInt("indexCount", size);
-        computeShader.SetTexture(kernelHandleInteract, "colorTexture", renderTexture);
-        computeShader.SetBuffer(kernelHandleInteract, "factionDataBuffer", factionDataBuffer);
-        computeShader.SetBuffer(kernelHandleInteract, "pointsBuffer", pointsBuffer);
-        computeShader.SetBuffer(kernelHandleInteract, "impactValuesbuffer", impactValuesBuffer);
-
-        computeShader.Dispatch(kernelHandleInteract, threadGroupsX, threadGroupsY, 1);
-
-
+        computeShader.SetInt("hasInteracted", 0);
+        computeShader.Dispatch(0, threadGroupsX, threadGroupsY, 1);
+        computeShader.SetInt("hasInteracted", 1);
+        computeShader.Dispatch(0, threadGroupsX, threadGroupsY, 1);
     }
 
 
@@ -137,54 +109,41 @@ public class Map
 
     private void InitializeComputeShader()
     {
-        computeShader = Resources.Load<ComputeShader>("Shader/ComputeShader");
-        kernelHandleInteract = computeShader.FindKernel("Interact");
-        kernelHandleEvaluate = computeShader.FindKernel("Evaluate");
-    }
+        computeShader = Resources.Load<ComputeShader>("Shader/Interact");
 
-    private void InitializeBuffers()
-    {
-        pointsBuffer = new ComputeBuffer(size, sizeof(int)*6+sizeof(bool));
+        pointsBuffer = new ComputeBuffer(size, sizeof(int) * 8);
         pointsBuffer.SetData(points);
 
-        impactValuesBuffer = new ComputeBuffer(size, sizeof(float)*4);
+        impactValuesBuffer = new ComputeBuffer(size*4, sizeof(float));
         impactValuesBuffer.SetData(impactValues);
 
         factionDataBuffer = new ComputeBuffer(factionCount, sizeof(float) * 8);
         factionDataBuffer.SetData(factionData);
+
+        computeShader.SetInt("ResoX", resoX);
+        computeShader.SetInt("ResoY", resoY);
+        computeShader.SetInt("threadCountX", threadGroupsX * 8);
+        computeShader.SetInt("threadCountY", threadGroupsY * 8);
+        computeShader.SetInt("indexCount", size);
+        computeShader.SetTexture(0, "colorTexture", renderTexture);
+
+        computeShader.SetBuffer(0, "factionDataBuffer", factionDataBuffer);
+        computeShader.SetBuffer(0, "pointsBuffer", pointsBuffer);
+        computeShader.SetBuffer(0, "impactValuesBuffer", impactValuesBuffer);
     }
 
     private void GenerateStartPositions()
     {
-        foreach(FactionSettings settings in GlobalSettings.Instance.factionSettings)
+        for(int i = 1; i < factionCount; i++)
         {
+            FactionSettings settings = GlobalSettings.Instance.factionSettings[i];
             int index = GetPositionIndex(settings.StartPosition);
             points[index].faction = settings.id;
-            points[index].isActive = true;
+            points[index].isActive = 1;
             Debug.Log("faction " + settings.id);
         }
     }
 
-    public void Update()
-    {
-        //Debug.Log("update");
-        //for(int i = 0;i < 20*resoX;i++)
-        //{
-        //    points[i].Interact();
-        //}
-        //for (int i = 0; i < 20 * resoX; i++)
-        //{
-        //    points[i].Evaluate(ref colorMap);
-
-        //foreach (Point point in points)
-        //{
-        //    point.Interact();
-        //}
-        //foreach (Point point in points)
-        //{
-        //    point.Evaluate(ref colorMap);
-        //}
-    }
 
     private int4 GetNeighbourIndices(int index)
     {

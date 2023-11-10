@@ -46,9 +46,10 @@ public class MapView : MonoBehaviour
 
     private void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
-
-
-        Graphics.Blit(renderTexture, destination);
+        if (renderTexture != null)
+        {
+            Graphics.Blit(renderTexture, destination);
+        }
     }
 
     private void UpdateView()

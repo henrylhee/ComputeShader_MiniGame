@@ -1,0 +1,153 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+
+// ############## constant ###########
+int threadCountX;
+int threadCountY;
+int resoX;
+int resoY;
+int indexCount;
+
+struct FactionSettings
+{
+    float conquerRate;
+    float conquerStrength;
+    float expansionRate;
+    float expansionStrength;
+    float4 color;
+};
+StructuredBuffer<FactionSettings> factionDataBuffer;
+
+
+
+// ######### read/write data ############
+int hasInteracted;
+
+struct Point
+{
+    int index;
+    int faction;
+    int isActive;
+    int4 neighbourIndices;
+};
+RWStructuredBuffer<Point> pointsBuffer;
+
+RWBuffer<float> impactValuesBuffer;
+
+RWTexture2D<float4> colorTexture;
+
+
+[numthreads(8,8,1)]
+void CSMain(int3 id : SV_DispatchThreadID)
+{
+    if (hasInteracted == 0)
+    {
+        if (id.x >= resoX || id.y >= resoY)
+        {
+            return;
+        }
+    
+        int index = id.y * resoX + id.x;
+        float2 st = float2(id.x/threadCountX, id.y/threadCountX);
+        int faction = pointsBuffer[index].faction;
+    
+        if (faction == 0 || pointsBuffer[index].isActive == 0)
+        {
+            return;
+        }
+    
+        float value = frac(sin(dot(st.xy, float2(12.9898, 78.233))) * 43758.5453123);
+    
+        for (int direction = 0; direction < 4; direction++)
+        {
+            int neighbourIndex = pointsBuffer[index].neighbourIndices[direction];
+            if (neighbourIndex != indexCount)
+            {
+                if (pointsBuffer[neighbourIndex].faction == 0)
+                {
+                    if (value < factionDataBuffer[faction].expansionRate)
+                    {
+                        impactValuesBuffer[4 * neighbourIndex + direction] = factionDataBuffer[faction].expansionStrength;
+                    }
+                }
+                else
+                {
+                    if (value < factionDataBuffer[faction].conquerRate)
+                    {
+                        impactValuesBuffer[4 * neighbourIndex + direction] = factionDataBuffer[faction].conquerStrength;
+                    }
+                }
+                pointsBuffer[neighbourIndex].isActive = 1;
+            }
+        }
+    }
+    else
+    {
+        if (id.x >= resoX || id.y >= resoY)
+        {
+            return;
+        }
+    
+        int index = id.y * resoX + id.x;
+    
+        if (pointsBuffer[index].isActive == 0)
+        {
+            return;
+        }
+    
+        int faction = pointsBuffer[index].faction;
+        int4 neighbourIndices = pointsBuffer[index].neighbourIndices;
+        bool isActive = false;
+    
+        for (int i = 0; i < 4; i++)
+        {
+            int neighbourIndex = neighbourIndices[i];
+            if (neighbourIndex == indexCount)
+            {
+                continue;
+            }
+            if (pointsBuffer[neighbourIndex].faction != faction)
+            {
+                isActive = true;
+                break;
+            }
+        }
+        if (isActive == false)
+        {
+            pointsBuffer[index].isActive = 0;
+            return;
+        }
+    
+        float maxImpact = impactValuesBuffer[4 * index];
+        int successfulneighbourDir = 0;
+        for (int j = 1; j < 4; j++)
+        {
+            if (maxImpact < impactValuesBuffer[4 * index + j])
+            {
+                maxImpact = impactValuesBuffer[4 * index + j];
+                successfulneighbourDir = j;
+            }
+        }
+        if (maxImpact == 0)
+        {
+            return;
+        }
+        else
+        {
+            for(int i = 0; i < 4; i++)
+            {
+                impactValuesBuffer[4 * index + i] = 0;
+            }
+        }
+        int newFaction = pointsBuffer[neighbourIndices[(successfulneighbourDir + 2) % 4]].faction;
+    
+        pointsBuffer[index].faction = newFaction;
+        int y = floor(index / resoX);
+        int x = index - resoX * y;
+        colorTexture[float2(x, y)] = factionDataBuffer[newFaction].color;
+    }   
+}
+

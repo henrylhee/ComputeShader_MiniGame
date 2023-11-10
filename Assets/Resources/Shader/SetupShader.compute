@@ -9,7 +9,7 @@ int resoX;
 int resoY;
 
 [numthreads(8,8,1)]
-void CSMain (uint3 id : SV_DispatchThreadID)
+void CSMain (int3 id : SV_DispatchThreadID)
 {
     if (id.x >= resoX || id.y >= resoY)
     {
@@ -19,5 +19,5 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     int index = id.y * resoX + id.x;
     int y = floor(index / resoX);
     int x = index - resoX * y;
-    result[x, y] = initColor;
+    result[float2(x, y)] = initColor;
 }

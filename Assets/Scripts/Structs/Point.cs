@@ -4,22 +4,23 @@ using System.Linq;
 using System.Reflection;
 using Unity.Mathematics;
 using Random = UnityEngine.Random;
-using UnityEngine;
 using System.Net;
-
+using System.Numerics;
 
 struct Point
 {
     public int index;
     public int faction;
-    public bool isActive;
-    public int4 neighbourIndices;
+    public int isActive;
+    private int paddingDummy;
+    public int4 neighbourIndices; // new vector in gpu starts here (every 16 byte)
 
-    public Point(int index, int faction, bool isActive, int4 neighbourIndices)
+    public Point(int index, int faction, int isActive, int4 neighbourIndices)
     {
         this.index = index;
         this.faction = faction;
         this.isActive = isActive;
+        this.paddingDummy = 0;
         this.neighbourIndices = neighbourIndices;
     }
 };
