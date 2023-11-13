@@ -9,19 +9,24 @@ using System;
 using UnityEditor.Rendering.LookDev;
 using UnityEngine.UIElements;
 using Unity.VisualScripting;
+using UnityEngine.Events;
 
 public class Map
 {
     private ComputeShader computeShader;
     private ComputeShader setupShader;
+
     public RenderTexture renderTexture;
 
     public ComputeBuffer factionDataBuffer;
     public ComputeBuffer pointsBuffer;
     public ComputeBuffer impactValuesBuffer;
+    public ComputeBuffer pointsInjectBuffer;
 
     public ComputeBuffer test;
-    public ComputeBuffer timeSeedBuffer;
+
+    int CSMainKernel;
+    int CSInjectPointsKernel;
 
     float4S[] t;
 
@@ -29,12 +34,14 @@ public class Map
 
     Point[] points;
     float[] impactValues;
+    int4S[] injectionPoints;
     FactionData[] factionData;
     int factionCount;
 
     private int size;
     private int resoX;
     private int resoY;
+    private int injectionReso;
 
     private int threadGroupsX;
     private int threadGroupsY;
@@ -73,6 +80,7 @@ public class Map
         InitializeComputeShader();
         Debug.Log("points: " + points.Length);
     }
+
     public void Update()
     {
         timeSeed += Time.deltaTime;
@@ -83,9 +91,9 @@ public class Map
     {
         computeShader.SetFloat("timeSeed", timeSeed);
         computeShader.SetInt("hasInteracted", 0);
-        computeShader.Dispatch(0, threadGroupsX, threadGroupsY, 1);
+        computeShader.Dispatch(CSMainKernel, threadGroupsX, threadGroupsY, 1);
         computeShader.SetInt("hasInteracted", 1);
-        computeShader.Dispatch(0, threadGroupsX, threadGroupsY, 1);
+        computeShader.Dispatch(CSMainKernel, threadGroupsX, threadGroupsY, 1);
         test.GetData(t);
         //Debug.Log("-->>"+points[0].neighbourIndices.x);
         //Debug.Log(points[0].neighbourIndices.y);
@@ -116,6 +124,8 @@ public class Map
     {
         Debug.Log("Initialize compute shader");
         computeShader = Resources.Load<ComputeShader>("Shader/Interact");
+        CSMainKernel = computeShader.FindKernel("CSMain");
+        CSInjectPointsKernel = computeShader.FindKernel("CSInjectPoints");
 
         pointsBuffer = new ComputeBuffer(size, sizeof(int) * 8);
         pointsBuffer.SetData(points);
@@ -126,34 +136,46 @@ public class Map
         factionDataBuffer = new ComputeBuffer(factionCount, sizeof(float) * 8);
         factionDataBuffer.SetData(factionData);
 
+        float injectSize = ((PlayerFactionSettings)GlobalSettings.Instance.factionSettings[1]).InjectionSize;
+        injectionReso = Mathf.CeilToInt((injectSize*resoX) / 8);
+        pointsInjectBuffer = new ComputeBuffer((injectionReso*injectionReso)/4, 16);
+
         test = new ComputeBuffer(1, sizeof(float)*4);
         t = new float4S[1];
         t[0] = new float4S(0, 0, 0, 0);
         test.SetData(t);
 
+
         
+        computeShader.SetBuffer(CSInjectPointsKernel, "pointsInjectBuffer", pointsInjectBuffer);
+        computeShader.SetBuffer(CSInjectPointsKernel, "test", test);
+        computeShader.SetInt("injectionReso", injectionReso);
+
+
         computeShader.SetInt("resoX", resoX);
         computeShader.SetInt("resoY", resoY);
         computeShader.SetInt("threadCountX", threadGroupsX * 8);
         computeShader.SetInt("threadCountY", threadGroupsY * 8);
         computeShader.SetInt("indexCount", size);
-        computeShader.SetTexture(0, "colorTexture", renderTexture);
+        computeShader.SetTexture(CSMainKernel, "colorTexture", renderTexture);
+        computeShader.SetTexture(CSInjectPointsKernel, "colorTexture", renderTexture);
 
-        computeShader.SetBuffer(0, "factionDataBuffer", factionDataBuffer);
-        computeShader.SetBuffer(0, "pointsBuffer", pointsBuffer);
-        computeShader.SetBuffer(0, "impactValuesBuffer", impactValuesBuffer);
-        computeShader.SetBuffer(0, "test", test);
+        computeShader.SetBuffer(CSMainKernel, "factionDataBuffer", factionDataBuffer);
+        computeShader.SetBuffer(CSMainKernel, "pointsBuffer", pointsBuffer);
+        computeShader.SetBuffer(CSInjectPointsKernel, "pointsBuffer", pointsBuffer);
+        computeShader.SetBuffer(CSMainKernel, "impactValuesBuffer", impactValuesBuffer);
+        computeShader.SetBuffer(CSMainKernel, "test", test);
     }
 
     private void GenerateStartPositions()
     {
-        for(int i = 1; i < factionCount; i++)
+        List<FactionSettings> settings = GlobalSettings.Instance.factionSettings;
+        for (int i = 1; i < factionCount; i++)
         {
-            FactionSettings settings = GlobalSettings.Instance.factionSettings[i];
-            int index = GetPositionIndex(settings.StartPosition);
-            points[index].faction = settings.id;
+            int index = GetPositionIndex(settings[i].StartPosition);
+            points[index].faction = settings[i].id;
             points[index].isActive = 1;
-            Debug.Log("faction " + settings.id);
+            Debug.Log("faction " + settings[i].id);
         }
     }
 
@@ -181,24 +203,64 @@ public class Map
 
     private void InitializeFactionData()
     {
-        factionCount = GlobalSettings.Instance.factionSettings.Count;
+        List<FactionSettings> settings = GlobalSettings.Instance.factionSettings;
+        factionCount = settings.Count;
         factionData = new FactionData[factionCount];
         factionData[0] = new FactionData();
         for (int i = 1; i < factionCount; i++)
         {
-            FactionSettings factionSettings = GlobalSettings.Instance.factionSettings[i];
             factionData[i] = new FactionData();
-            factionData[i].conquerRate = factionSettings.ConquerRate;
-            factionData[i].conquerStrength = factionSettings.ConquerStrength;
-            factionData[i].expansionRate = factionSettings.ExpansionRate;
-            factionData[i].expansionStrength = factionSettings.ExpansionStrength;
-            factionData[i].color = factionSettings.Color;
+            factionData[i].conquerRate = settings[i].ConquerRate;
+            factionData[i].conquerStrength = settings[i].ConquerStrength;
+            factionData[i].expansionRate = settings[i].ExpansionRate;
+            factionData[i].expansionStrength = settings[i].ExpansionStrength;
+            factionData[i].color = settings[i].Color;
         }
     }
 
     public void InjectPixels(int positionX, int positionY)
     {
         
+
+        List<int[]> pointIndices = new List<int[]>();
+        pointIndices = Rasterization.GetPointsInCircle(positionX, positionY, Mathf.RoundToInt(playerSettings.InjectionSize*resoX));
+
+        injectionPoints = new int4S[Mathf.CeilToInt(pointIndices.Count/2)];
+        for (int  i = 0; i < injectionPoints.Length-1; i++)
+        {
+            injectionPoints[i].x = pointIndices[i*2][0];
+            injectionPoints[i].y = pointIndices[i*2][1];
+            injectionPoints[i].z = pointIndices[i*2+1][0];
+            injectionPoints[i].w = pointIndices[i*2+1][1];
+        }
+        injectionPoints[injectionPoints.Length - 1].x = pointIndices[(injectionPoints.Length - 1) * 2][0];
+        injectionPoints[injectionPoints.Length - 1].y = pointIndices[(injectionPoints.Length - 1) * 2][1];
+        if(pointIndices.Count%2 == 0) 
+        {
+            injectionPoints[injectionPoints.Length - 1].z = pointIndices[(injectionPoints.Length - 1) * 2 + 1][0];
+            injectionPoints[injectionPoints.Length - 1].w = pointIndices[(injectionPoints.Length - 1) * 2 + 1][1];
+        }
+
+        
+        pointsInjectBuffer.SetData(injectionPoints);
+
+        computeShader.Dispatch(CSInjectPointsKernel, injectionReso, injectionReso, 1);
+        Debug.Log(CSMainKernel);
+        Debug.Log(CSInjectPointsKernel);
+        Debug.Log("Mouse clicked at: " + positionX+", " + positionY);
+        Debug.Log("amount of injected points: "+injectionPoints.Length);
+        test.GetData(t);
+        Debug.Log(t[0].x);
+
+        pointsInjectBuffer.Release();
+    }
+
+    public void ReleaseComputeBuffer()
+    {
+        factionDataBuffer.Release();
+        pointsBuffer.Release();
+        impactValuesBuffer.Release();
+        test.Release();
     }
 }
 
@@ -210,6 +272,21 @@ public struct float4S
     public float z;
     public float w;
     public float4S(float x, float y, float z, float w)
+    {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.w = w;
+    }
+}
+
+public struct int4S
+{
+    public int x;
+    public int y;
+    public int z;
+    public int w;
+    public int4S(int x, int y, int z, int w)
     {
         this.x = x;
         this.y = y;

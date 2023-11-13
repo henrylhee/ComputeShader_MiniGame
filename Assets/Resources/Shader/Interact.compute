@@ -1,15 +1,9 @@
 // Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
+#pragma kernel CSInjectPoints
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
-
-// ############## constant ###########
-int threadCountX;
-int threadCountY;
-int resoX;
-int resoY;
-int indexCount;
 
 struct FactionSettings
 {
@@ -19,14 +13,6 @@ struct FactionSettings
     float expansionStrength;
     float4 color;
 };
-StructuredBuffer<FactionSettings> factionDataBuffer;
-
-
-
-// ######### read/write data ############
-int hasInteracted;
-float timeSeed;
-
 
 struct Point
 {
@@ -36,10 +22,23 @@ struct Point
     int dummy;
     int4 neighbourIndices;
 };
+
+
+int threadCountX;
+int threadCountY;
+int resoX;
+int resoY;
+int indexCount;
+int injectionReso;
+
+int hasInteracted;
+float timeSeed;
+
+StructuredBuffer<FactionSettings> factionDataBuffer;
+
 RWStructuredBuffer<Point> pointsBuffer;
-
 RWBuffer<float> impactValuesBuffer;
-
+RWBuffer<float4> pointsInjectBuffer;
 RWTexture2D<float4> colorTexture;
 
 
@@ -71,7 +70,7 @@ void CSMain(int3 id : SV_DispatchThreadID)
         if (id.x == 99 && id.y == 99)
         {
             //test[0] = float4(pointsBuffer[index].faction, impactValuesBuffer[4 * pointsBuffer[index].neighbourIndices[1] + 1], impactValuesBuffer[4 * pointsBuffer[index].neighbourIndices[2] + 2], impactValuesBuffer[4 * pointsBuffer[index].neighbourIndices[3] + 3]);
-            test[0] = float4(timeSeed, 0, hasInteracted, 0);
+            //test[0] = float4(timeSeed, 0, hasInteracted, 0);
         }
         
         
@@ -199,6 +198,25 @@ void CSMain(int3 id : SV_DispatchThreadID)
     }   
 }
 
+[numthreads(8, 8, 1)]
+void CSInjectPoints(int3 id : SV_DispatchThreadID)
+{
+    int index = id.y * injectionReso + id.x;
+    float4 injectPoints = pointsInjectBuffer[index];
+    int pointsIndex = injectPoints.y * resoX + injectPoints.x;
+    pointsBuffer[pointsIndex].faction = 1;
+    pointsBuffer[pointsIndex].isActive = 1;
+    colorTexture[float2(injectPoints.x, injectPoints.y)] = factionDataBuffer[1].color;
+    pointsIndex = injectPoints.w * resoX + injectPoints.z;
+    pointsBuffer[pointsIndex].faction = 1;
+    pointsBuffer[pointsIndex].isActive = 1;
+    colorTexture[float2(injectPoints.z, injectPoints.w)] = factionDataBuffer[1].color;
+    
+    if (id.x == 0 && id.y == 0)
+    {
+        test[0] = float4(3, 7, 7, 2);
+    }
+}
 
 
 

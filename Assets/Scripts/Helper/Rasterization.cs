@@ -5,23 +5,16 @@ using UnityEngine;
 
 public class Rasterization
 {
-    public static void GetPixelsInCircle(int centerX, int centerY, int radius)
+    public static List<int[]> GetPointsInCircle(int centerX, int centerY, int radius)
     {
         int diameter = radius * 2 + 1;
 
-        byte[,] buffer = new byte[diameter, diameter];
-        circle(buffer, 25, 25, 20);
-
-        for (int y = 0; y < 50; ++y)
-        {
-            for (int x = 0; x < 50; ++x)
-                Debug.Log(buffer[y, x].ToString());
-
-            Debug.Log("");
-        }
+        List<int[]> buffer = new List<int[]>();
+        circle(buffer, centerX, centerY, radius);
+        return buffer;
     }
 
-    static void circle(byte[,] buffer, int cx, int cy, int radius)
+    static void circle(List<int[]> buffer, int cx, int cy, int radius)
     {
         int error = -radius;
         int x = radius;
@@ -49,21 +42,19 @@ public class Rasterization
         }
     }
 
-    static void plot4points(byte[,] buffer, int cx, int cy, int x, int y)
+    static void plot4points(List<int[]> buffer, int cx, int cy, int x, int y)
     {
         horizontalLine(buffer, cx - x, cy + y, cx + x);
         if (y != 0)
             horizontalLine(buffer, cx - x, cy - y, cx + x);
     }
 
-    static void setPixel(byte[,] buffer, int x, int y)
+    static void horizontalLine(List<int[]> buffer, int x0, int y0, int x1)
     {
-        buffer[y, x]++;
-    }
-
-    static void horizontalLine(byte[,] buffer, int x0, int y0, int x1)
-    {
+        int[] pointIndex = new int[2];
         for (int x = x0; x <= x1; ++x)
-            setPixel(buffer, x, y0);
+            pointIndex[0] = x;
+            pointIndex[1] = y0;
+            buffer.Add(pointIndex);
     }
 }

@@ -27,10 +27,6 @@ public class GameModel
 
     public Map map { get; private set; }
 
-    //Input
-    private Vector2 mousePosition;
-    private bool mousePressed;
-
     public Resolution resolution { get; private set; }
 
 
@@ -41,12 +37,13 @@ public class GameModel
         StatesUpdated = new UnityEvent();
 
         map.Initialize();
+
         Debug.Log("GameModel initialized.");
     }
 
     public void Update()
     {
-        UpdateInput();
+        // input events executed before unity update!
         UpdateStates();
         StatesUpdated.Invoke();
     }
@@ -55,33 +52,4 @@ public class GameModel
     {
         map.Update();
     }
-
-    #region Input
-
-    private void UpdateInput()
-    {
-        mousePosition = Controller.Instance.GetMousePosition();
-        if (Controller.Instance.IsMouseJustPressed())
-        {
-            mousePressed = true;
-            MouseJustPressed();
-        }
-        else if (Controller.Instance.IsMouseJustReleased())
-        {
-            mousePressed = false;
-            MouseJustReleased();
-        }
-    }
-
-    private void MouseJustPressed()
-    {
-        map.InjectPixels(Mathf.RoundToInt(mousePosition.x), Mathf.RoundToInt(mousePosition.y));
-        Debug.Log(mousePosition);
-    }
-
-    private void MouseJustReleased()
-    {
-
-    }
-    #endregion
 }

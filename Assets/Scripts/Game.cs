@@ -6,20 +6,17 @@ using Unity.VisualScripting;
 using UnityEditor;
 using UnityEditor.U2D.Aseprite;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 public class Game : MonoBehaviour
 {
-    Controller controller;
+    UnityEvent GameEnds;
 
-    bool isPlaying = false;
-
-#if !isPlaying
     [SerializeField]
     PlayerFactionObject playerFaction;
     [SerializeField]
     List<FactionObject> enemyFactions;
-#endif
     [SerializeField]
     List<FactionSettings> factionSettingsList;
 
@@ -33,20 +30,17 @@ public class Game : MonoBehaviour
         time = Time.time;
         updateTime = .5f;
         fps = 0;
+        Application.targetFrameRate = 30;
     }
 
-
-    void Start()
-    {
-    }
 
     void Update()
     {
-        fps = 1f / Time.deltaTime;
-        if (fps < 20) { Application.Quit(); }
-
-
         GameModel.Instance.Update();
+
+
+        //fps = 1f / Time.deltaTime;
+        //if (fps < 20) { Application.Quit(); }
 
         //time += Time.deltaTime;
         //if (time > updateTime)
@@ -59,10 +53,7 @@ public class Game : MonoBehaviour
 
     private void OnDestroy()
     {
-        GameModel.Instance.map.factionDataBuffer.Release();
-        GameModel.Instance.map.pointsBuffer.Release();
-        GameModel.Instance.map.impactValuesBuffer.Release();
-        GameModel.Instance.map.test.Release();
+        GameEnds?.Invoke();
     }
 
     private void Initialize()
@@ -87,19 +78,22 @@ public class Game : MonoBehaviour
         GlobalSettings.Instance.Initialize(factionSettingsList);
         
         GameModel.Instance.Initialize();
+        GameEnds = new UnityEvent();
+        GameEnds.AddListener(GameModel.Instance.map.ReleaseComputeBuffer);
 
-        controller = this.AddComponent<Controller>();
-        controller.Initialize();
+        GetComponent<Controller>().Initialize();
 
         Debug.Log("Game initialized.");
-        isPlaying = true;
     }
 
     private void OnValidate()
     {
-        if(GameModel.Instance.map != null)
+        if (Application.isPlaying)
         {
-            GameModel.Instance.map.UpdateSettings();
+            if (GameModel.Instance.map != null)
+            {
+                GameModel.Instance.map.UpdateSettings();
+            }
         }
     }
 }

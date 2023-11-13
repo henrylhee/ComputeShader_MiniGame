@@ -2,52 +2,45 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class Controller : MonoBehaviour
 {
-    private static Controller instance;
-    public static Controller Instance
-    {
-        get
-        {
-            if (instance == null)
-            {
-                instance = FindObjectOfType<Controller>();
-                if (instance == null)
-                    instance = new GameObject(typeof(Controller).Name).AddComponent<Controller>();
-                //DontDestroyOnLoad(instance.gameObject);
-            }
-            return instance;
-        }
-    }
-
     Resolution resolution;
+
+    [HideInInspector]
+    public UnityEvent<int,int> MouseJustPressed;
+    [HideInInspector]
+    public UnityEvent<int,int> MouseJustReleased;
+
+    Vector2 mousePosition;
+
 
     void Update()
     {
-        
+        if (Input.GetMouseButtonDown(0))
+        {
+            mousePosition = Input.mousePosition;
+            MouseJustPressed?.Invoke(Mathf.RoundToInt(mousePosition.x), Mathf.RoundToInt(mousePosition.y));
+        }
+        else
+        {
+            if (Input.GetMouseButtonUp(0))
+            {
+                mousePosition = Input.mousePosition;
+                MouseJustReleased?.Invoke(Mathf.RoundToInt(mousePosition.x), Mathf.RoundToInt(mousePosition.y));
+            }
+        }
     }
 
     public void Initialize()
     {
-        resolution = Screen.currentResolution;
-        Debug.Log("Controller screen resolution:" + new Vector2(resolution.width,resolution.height));
+        resolution = GameModel.Instance.resolution;
+
+        MouseJustPressed = new UnityEvent<int,int>();
+        MouseJustReleased = new UnityEvent<int, int>();
+        MouseJustPressed.AddListener(GameModel.Instance.map.InjectPixels);
 
         Debug.Log("Controller initialized.");
-    }
-
-    public Vector2 GetMousePosition()
-    {
-        return new Vector2(Input.mousePosition.x, Input.mousePosition.y);
-    }
-
-    public bool IsMouseJustPressed()
-    {
-        return Input.GetMouseButtonDown(0);
-    }
-
-    public bool IsMouseJustReleased()
-    {
-        return Input.GetMouseButtonUp(0);
     }
 }
