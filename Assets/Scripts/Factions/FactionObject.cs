@@ -14,28 +14,28 @@ public class FactionObject : ScriptableObject
     Vector2Int startPosition;
     public Vector2Int StartPosition { get => startPosition; }
     public Color Color { get => color; }
-    [SerializeField, Range(0f, 1f)]
+    [SerializeField, Range(0, 0.2f)]
     float conquerRate;
     public float ConquerRate { get => conquerRate; }
-    [SerializeField, Range(0f, 1f)]
+    [SerializeField, Range(0, 0.2f)]
     float conquerStrength;
     public float ConquerStrength { get => conquerStrength; }
-    [SerializeField, Range(0f,1f)]
+    [SerializeField, Range(0, 0.2f)]
     float expansionRate;
     public float ExpansionRate { get => expansionRate;}
-    [SerializeField, Range(0f, 1f)]
+    [SerializeField, Range(0, 0.2f)]
     float expansionStrength;
     public float ExpansionStrength { get => expansionStrength; }
-    [SerializeField, Range(0f, 1f)]
+    //[SerializeField, Range(0, 0.2f)]
     float expansionRange;
     public float ExpansionRange { get => expansionRange; }
-    [SerializeField]
+    //[SerializeField]
     float sharpness;
     public float Sharpness { get => sharpness;}
-    [SerializeField]
+    //[SerializeField]
     float stability;
     public float Stability { get => stability;}
-    [SerializeField]
+    //[SerializeField]
     float randomness;
     public float Randomness { get => randomness;}
 }

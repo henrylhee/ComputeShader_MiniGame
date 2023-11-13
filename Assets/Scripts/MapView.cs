@@ -36,7 +36,7 @@ public class MapView : MonoBehaviour
 
         image = GetComponent<RawImage>();
 
-        GameModel.Instance.OnStatesUpdated.AddListener(UpdateView);
+        GameModel.Instance.StatesUpdated.AddListener(UpdateView);
 
         colorTexture.Apply();
         //image.texture = colorTexture;

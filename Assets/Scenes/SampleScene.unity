@@ -476,11 +476,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf52541ffb9a04b4d8d9409b74d83e8f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  factionObjects:
+  playerFaction: {fileID: 11400000, guid: 1115113c496e18545b4b05b9bbb03074, type: 2}
+  enemyFactions:
   - {fileID: 11400000, guid: e784141c61a0b7149a0230c63f703523, type: 2}
   - {fileID: 11400000, guid: 4c3b628f446e29d46a23ce420265514b, type: 2}
   - {fileID: 11400000, guid: 84f51db9053bed446b0992a2381f637e, type: 2}
-  - {fileID: 11400000, guid: 94ed4fd9037b3204c9705ca7e509f3c4, type: 2}
+  factionSettingsList: []
 --- !u!4 &926986588
 Transform:
   m_ObjectHideFlags: 0

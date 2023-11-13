@@ -9,15 +9,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: abc9ed2c8418a3a46bff0f265008cace, type: 3}
-  m_Name: C
+  m_Script: {fileID: 11500000, guid: 18440ca815f551d48a1df0121cf0edc6, type: 3}
+  m_Name: PlayerFaction
   m_EditorClassIdentifier: 
-  _name: C
-  color: {r: 0, g: 0.7453065, b: 1, a: 0}
+  _name: 
+  color: {r: 0.7372549, g: 0, b: 0, a: 0}
   startPosition:
-    x: 1400
+    x: 1800
     y: 800
-  conquerRate: 0.107
-  conquerStrength: 0.2
-  expansionRate: 0.2
-  expansionStrength: 0.2
+  conquerRate: 0.18
+  conquerStrength: 0.127
+  expansionRate: 0.094
+  expansionStrength: 0.125
+  injectionSize: 0.116
+  injectionRandomness: 0.153

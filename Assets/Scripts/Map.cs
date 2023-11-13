@@ -53,13 +53,11 @@ public class Map
         Debug.Log("height resolution: " + resoY);
         Debug.Log("array size: " + size);
 
-
-        SetFactionData();
+        InitializeFactionData();
 
         points = new Point[size];
         impactValues = new float[size*4];
-
-       
+     
         for (int i = 0; i < size; i++)
         {
             points[i] = new Point(i, 0, 0, GetNeighbourIndices(i));
@@ -73,7 +71,6 @@ public class Map
 
         InitializeRenderTexture();
         InitializeComputeShader();
-
         Debug.Log("points: " + points.Length);
     }
     public void Update()
@@ -94,12 +91,11 @@ public class Map
         //Debug.Log(points[0].neighbourIndices.y);
         //Debug.Log(points[0].neighbourIndices.z);
         //Debug.Log(points[0].neighbourIndices.w);
-        Debug.Log("#### Time seed: ####"+t[0].x);
-        Debug.Log("#### random value: ####" + t[0].y);
-        Debug.Log(t[0].z);
+        //Debug.Log("#### Time seed: ####"+t[0].x);
+        //Debug.Log("#### random value: ####" + t[0].y);
+        //Debug.Log(t[0].z);
         //Debug.Log(t[0].w);
     }
-
 
     private void InitializeRenderTexture()
     {
@@ -161,7 +157,6 @@ public class Map
         }
     }
 
-
     private int4 GetNeighbourIndices(int index)
     {
         int4 result = new int4();
@@ -177,21 +172,14 @@ public class Map
         return resoX*(position.y-1) + position.x - 1;
     }
 
-    
-
-    private int CalculateWorkGroups(int reso, int numThreads)
-    {
-        return Mathf.CeilToInt(reso / numThreads);
-    }
-
     public void UpdateSettings()
     {
-        SetFactionData();
+        InitializeFactionData();
         factionDataBuffer.SetData(factionData);
         computeShader.SetBuffer(0, "factionDataBuffer", factionDataBuffer);
     }
 
-    private void SetFactionData()
+    private void InitializeFactionData()
     {
         factionCount = GlobalSettings.Instance.factionSettings.Count;
         factionData = new FactionData[factionCount];
@@ -206,6 +194,11 @@ public class Map
             factionData[i].expansionStrength = factionSettings.ExpansionStrength;
             factionData[i].color = factionSettings.Color;
         }
+    }
+
+    public void InjectPixels(int positionX, int positionY)
+    {
+        
     }
 }
 

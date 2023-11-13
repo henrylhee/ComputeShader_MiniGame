@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEditor.U2D.Aseprite;
@@ -9,10 +11,18 @@ using UnityEngine.UI;
 public class Game : MonoBehaviour
 {
     Controller controller;
+
+    bool isPlaying = false;
+
+#if !isPlaying
     [SerializeField]
-    List<FactionObject> factionObjects;
+    PlayerFactionObject playerFaction;
+    [SerializeField]
+    List<FactionObject> enemyFactions;
+#endif
     [SerializeField]
     List<FactionSettings> factionSettingsList;
+
     float time;
     float updateTime;
     float fps;
@@ -62,11 +72,16 @@ public class Game : MonoBehaviour
         dummy.Initialize(ScriptableObject.CreateInstance<FactionObject>(),0);
         factionSettingsList.Add(dummy);
 
-        for (short index = 1; index <= factionObjects.Count; index++)
+        PlayerFactionSettings playerSettings = new PlayerFactionSettings();
+        playerSettings.Initialize(playerFaction, Convert.ToInt16(1));
+        factionSettingsList.Add(playerSettings);
+
+        short indexOffset = 2;
+        for (short index = 0; index < enemyFactions.Count; index++)
         {
-            FactionSettings factionSettings = new FactionSettings();
-            factionSettings.Initialize(factionObjects[index-1], index);
-            factionSettingsList.Add(factionSettings);
+            FactionSettings enemySettings = new FactionSettings();
+            enemySettings.Initialize(enemyFactions[index], (short)(index + indexOffset));
+            factionSettingsList.Add(enemySettings);
         }
 
         GlobalSettings.Instance.Initialize(factionSettingsList);
@@ -77,6 +92,7 @@ public class Game : MonoBehaviour
         controller.Initialize();
 
         Debug.Log("Game initialized.");
+        isPlaying = true;
     }
 
     private void OnValidate()

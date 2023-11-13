@@ -23,7 +23,7 @@ public class GameModel
     }
 
     [HideInInspector]
-    public UnityEvent OnStatesUpdated;
+    public UnityEvent StatesUpdated;
 
     public Map map { get; private set; }
 
@@ -38,7 +38,7 @@ public class GameModel
     {
         resolution = Screen.currentResolution;
         map = new Map();
-        OnStatesUpdated = new UnityEvent();
+        StatesUpdated = new UnityEvent();
 
         map.Initialize();
         Debug.Log("GameModel initialized.");
@@ -47,13 +47,13 @@ public class GameModel
     public void Update()
     {
         UpdateInput();
-        map.Update();
-        OnStatesUpdated.Invoke();
+        UpdateStates();
+        StatesUpdated.Invoke();
     }
 
     private void UpdateStates()
     {
-        
+        map.Update();
     }
 
     #region Input
@@ -75,6 +75,8 @@ public class GameModel
 
     private void MouseJustPressed()
     {
+        map.InjectPixels(Mathf.RoundToInt(mousePosition.x), Mathf.RoundToInt(mousePosition.y));
+        Debug.Log(mousePosition);
     }
 
     private void MouseJustReleased()

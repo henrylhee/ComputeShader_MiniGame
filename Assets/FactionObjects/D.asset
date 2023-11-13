@@ -17,11 +17,7 @@ MonoBehaviour:
   startPosition:
     x: 600
     y: 600
-  conquerRate: 0.853
-  conquerStrength: 0.479
+  conquerRate: 0.2
+  conquerStrength: 0.2
   expansionRate: 0.139
-  expansionStrength: 0.485
-  expansionRange: 0
-  sharpness: 0
-  stability: 0
-  randomness: 0
+  expansionStrength: 0.2

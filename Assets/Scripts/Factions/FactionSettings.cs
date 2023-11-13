@@ -26,16 +26,16 @@ public class FactionSettings
     [SerializeField, Range(0, 0.2f)]
     private float expansionStrength;
     public float ExpansionStrength { get => expansionStrength; }
-    [SerializeField]
+    //[SerializeField]
     private float expansionRange;
     public float ExpansionRange { get => expansionRange; }
-    [SerializeField]
+    //[SerializeField]
     private float sharpness;
     public float Sharpness { get => sharpness; }
-    [SerializeField]
+    //[SerializeField]
     private float stability;
     public float Stability { get => stability; }
-    [SerializeField]
+    //[SerializeField]
     private float randomness;
     public float Randomness { get => randomness; }
 
