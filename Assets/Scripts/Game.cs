@@ -20,6 +20,8 @@ public class Game : MonoBehaviour
     [SerializeField]
     List<FactionSettings> factionSettingsList;
 
+    Audio audio;
+
     float time;
     float updateTime;
     float fps;
@@ -30,14 +32,19 @@ public class Game : MonoBehaviour
         time = Time.time;
         updateTime = .5f;
         fps = 0;
-        Application.targetFrameRate = 30;
+        //Application.targetFrameRate = 30;
+    }
+
+    private void Start()
+    {
+        audio = GetComponentInChildren<Audio>();
+        GameModel.Instance.map.OnInjectPixels.AddListener(audio.PlayInjectPixelsSound);
     }
 
 
     void Update()
     {
         GameModel.Instance.Update();
-
 
         //fps = 1f / Time.deltaTime;
         //if (fps < 20) { Application.Quit(); }
@@ -75,7 +82,7 @@ public class Game : MonoBehaviour
             factionSettingsList.Add(enemySettings);
         }
 
-        GlobalSettings.Instance.Initialize(factionSettingsList);
+        GlobalSettings.Instance.Initialize(factionSettingsList, GetComponentInChildren<GameSettings>());
         
         GameModel.Instance.Initialize();
         GameEnds = new UnityEvent();

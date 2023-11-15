@@ -12,15 +12,15 @@ struct Point
     public int index;
     public int faction;
     public int isActive;
-    private int paddingDummy;
+    private float brightnessInput;
     public int4 neighbourIndices; // new vector in gpu starts here (every 16 byte)
 
-    public Point(int index, int faction, int isActive, int4 neighbourIndices)
+    public Point(int index, int faction, int isActive, float brightnessInput, int4 neighbourIndices)
     {
         this.index = index;
         this.faction = faction;
         this.isActive = isActive;
-        this.paddingDummy = 0;
+        this.brightnessInput = brightnessInput;
         this.neighbourIndices = neighbourIndices;
     }
 };

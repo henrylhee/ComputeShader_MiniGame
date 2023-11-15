@@ -19,9 +19,11 @@ public class GlobalSettings
     }
 
     public List<FactionSettings> factionSettings;
+    public GameSettings gameSettings;
 
-    public void Initialize(List<FactionSettings> factionSettings)
+    public void Initialize(List<FactionSettings> factionSettings, GameSettings gameSettings)
     {
         this.factionSettings = factionSettings;
+        this.gameSettings = gameSettings;
     }
 }

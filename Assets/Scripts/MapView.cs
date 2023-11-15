@@ -9,7 +9,9 @@ public class MapView : MonoBehaviour
 
     [SerializeField] Color mouseColor;
     [SerializeField] Color emptyColor;
-    [SerializeField, Range(0f,0.2f)] float mouseRadius = 0.05f;
+    [SerializeField, Range(0f, 0.2f)] float mouseRadius = 0.05f;
+    [SerializeField]
+    Material renderTextureMat;
 
     RawImage image;
     Texture2D dataTexture;
@@ -31,14 +33,14 @@ public class MapView : MonoBehaviour
     {
         resolution = GameModel.Instance.resolution;
 
-        dataTexture = new Texture2D(resolution.width, resolution.height);
-        colorTexture = new Texture2D(resolution.width, resolution.height);
+        //dataTexture = new Texture2D(resolution.width, resolution.height);
+        //colorTexture = new Texture2D(resolution.width, resolution.height, TextureFormat.RGBAFloat, false);
 
-        image = GetComponent<RawImage>();
+        //image = GetComponent<RawImage>();
 
         GameModel.Instance.StatesUpdated.AddListener(UpdateView);
 
-        colorTexture.Apply();
+        //colorTexture.Apply();
         //image.texture = colorTexture;
 
         //InitializeShader();
@@ -49,13 +51,13 @@ public class MapView : MonoBehaviour
     {
         if (renderTexture != null)
         {
-            Graphics.Blit(renderTexture, destination);         
+            Graphics.Blit(renderTexture, destination, renderTextureMat);         
         }
     }
 
     private void UpdateView()
     {
-        //colorTexture.SetPixels(GameModel.Instance.map.colorMap, 0);
+        //Graphics.CopyTexture(GameModel.Instance.map.renderTexture, colorTexture);
         //colorTexture.Apply();
         //UpdateShader();
         renderTexture = GameModel.Instance.map.renderTexture;
@@ -63,16 +65,16 @@ public class MapView : MonoBehaviour
 
     private void InitializeShader()
     {
-        image.material.SetColor("_MouseColor", mouseColor);
-        image.material.SetColor("_EMPTYColor", emptyColor);
-        image.material.SetFloat("_MouseRadius", mouseRadius);
-        image.material.SetTexture("_ColorTexture", colorTexture);
-        image.material.SetFloat("_Width", resolution.width);
+        //image.material.SetColor("_MouseColor", mouseColor);
+        //image.material.SetColor("_EMPTYColor", emptyColor);
+        //image.material.SetFloat("_MouseRadius", mouseRadius);
+        //image.material.SetTexture("_ColorTexture", colorTexture);
+        //image.material.SetFloat("_Width", resolution.width);
     }
 
     private void UpdateShader()
     {
-        image.material.SetTexture("_ColorTexture", colorTexture);
+        //image.material.SetTexture("_ColorTexture", colorTexture);
     }
 
 

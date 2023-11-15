@@ -19,7 +19,7 @@ struct Point
     int index;
     int faction;
     int isActive;
-    int dummy;
+    float brightnessInput;
     int4 neighbourIndices;
 };
 
@@ -30,6 +30,10 @@ int resoX;
 int resoY;
 int indexCount;
 int injectionReso;
+int injectionCount;
+
+float brightnessMin;
+float brightnessInputIncrease;
 
 int hasInteracted;
 float timeSeed;
@@ -38,11 +42,26 @@ StructuredBuffer<FactionSettings> factionDataBuffer;
 
 RWStructuredBuffer<Point> pointsBuffer;
 RWBuffer<float> impactValuesBuffer;
-RWBuffer<float4> pointsInjectBuffer;
+RWBuffer<int4> pointsInjectBuffer;
 RWTexture2D<float4> colorTexture;
 
 
 RWBuffer<float4> test;
+
+
+void AdjustColorBrightness(int pointIndex, int2 colorIndex, int faction)
+{
+    float input = pointsBuffer[pointIndex].brightnessInput;
+    if (input < 1.0)
+    {
+        input += brightnessInputIncrease;
+        pointsBuffer[pointIndex].brightnessInput = input;
+
+    }
+    float fInput = 1.0 - sqrt(input) / (8.0/7.0);
+    float4 c = factionDataBuffer[faction].color;
+    colorTexture[colorIndex] = c * fInput;
+}
 
 
 float rand3dTo1d(float3 value, float3 dotDir = float3(12.9898, 78.233, 37.719))
@@ -66,13 +85,6 @@ void CSMain(int3 id : SV_DispatchThreadID)
         {
             return;
         }
-                ////-------------
-        if (id.x == 99 && id.y == 99)
-        {
-            //test[0] = float4(pointsBuffer[index].faction, impactValuesBuffer[4 * pointsBuffer[index].neighbourIndices[1] + 1], impactValuesBuffer[4 * pointsBuffer[index].neighbourIndices[2] + 2], impactValuesBuffer[4 * pointsBuffer[index].neighbourIndices[3] + 3]);
-            //test[0] = float4(timeSeed, 0, hasInteracted, 0);
-        }
-        
         
         int index = id.y * resoX + id.x;
         float2 st = float2((float) id.x / threadCountX, (float) id.y / threadCountX);
@@ -116,7 +128,22 @@ void CSMain(int3 id : SV_DispatchThreadID)
         }
         
         int index = id.y * resoX + id.x;
+        int y = floor(index / resoX);
+        int2 colorIndex = int2(index - resoX * y, y);
+        int faction = pointsBuffer[index].faction;
     
+        if (pointsBuffer[index].faction != 0)
+        {
+            AdjustColorBrightness(index, colorIndex, faction);
+            
+            //##### check stuff ######
+            if (id.x == 5 && id.y == 5)
+            {
+                test[0] = float4(colorTexture[colorIndex].x, colorTexture[colorIndex].y, colorTexture[colorIndex].z, colorTexture[colorIndex].w);
+                //test[0] = float4(timeSeed, 0, hasInteracted, 0);
+            }
+        }
+        
         if (pointsBuffer[index].isActive == 0)
         {
             return;
@@ -130,10 +157,12 @@ void CSMain(int3 id : SV_DispatchThreadID)
 
         //}
         
-        int faction = pointsBuffer[index].faction;
+        float2 st = float2((float) id.x / threadCountX, (float) id.y / threadCountX);
         int4 neighbourIndices = pointsBuffer[index].neighbourIndices;
         bool isActive = false;
-    
+        int friendlyNeighbours = 0;
+        int enemyNeighbours = 0;
+        
         for (int i = 0; i < 4; i++)
         {
             int neighbourIndex = neighbourIndices[i];
@@ -144,13 +173,34 @@ void CSMain(int3 id : SV_DispatchThreadID)
             if (pointsBuffer[neighbourIndex].faction != faction)
             {
                 isActive = true;
+                
+                if (pointsBuffer[neighbourIndex].faction != 0)
+                {
+                    enemyNeighbours++;
+                }
+                
                 break;
+            }
+            else
+            {
+                friendlyNeighbours++;
             }
         }
         if (isActive == false)
         {
             pointsBuffer[index].isActive = 0;
             return;
+        }
+        
+        if (friendlyNeighbours < 3)
+        {
+            if (rand3dTo1d(float3(st, timeSeed * 3.14)) > 0.92 + friendlyNeighbours * 0.03 - enemyNeighbours * 0.04)
+            {
+                pointsBuffer[index].faction = 0;
+                colorTexture[colorIndex] = float4(0, 0, 0, 1);
+                pointsBuffer[index].brightnessInput = 0;
+                return;
+            }
         }
         
         float maxImpact = impactValuesBuffer[4 * index];
@@ -174,7 +224,6 @@ void CSMain(int3 id : SV_DispatchThreadID)
             return;
         }
         
-        float2 st = float2((float) id.x / threadCountX, (float) id.y / threadCountX);
         float defence = rand3dTo1d(float3(st, timeSeed * 2.1));
         if (defence > maxImpact)
         {
@@ -192,30 +241,41 @@ void CSMain(int3 id : SV_DispatchThreadID)
         int newFaction = pointsBuffer[neighbourIndices[(successfulneighbourDir + 2) % 4]].faction;
     
         pointsBuffer[index].faction = newFaction;
-        int y = floor(index / resoX);
-        int x = index - resoX * y;
-        colorTexture[float2(x, y)] = factionDataBuffer[newFaction].color;     
+        
+        colorTexture[colorIndex] = factionDataBuffer[newFaction].color;
+        pointsBuffer[index].brightnessInput = 0;
     }   
 }
 
 [numthreads(8, 8, 1)]
 void CSInjectPoints(int3 id : SV_DispatchThreadID)
-{
-    int index = id.y * injectionReso + id.x;
-    float4 injectPoints = pointsInjectBuffer[index];
-    int pointsIndex = injectPoints.y * resoX + injectPoints.x;
-    pointsBuffer[pointsIndex].faction = 1;
-    pointsBuffer[pointsIndex].isActive = 1;
-    colorTexture[float2(injectPoints.x, injectPoints.y)] = factionDataBuffer[1].color;
-    pointsIndex = injectPoints.w * resoX + injectPoints.z;
-    pointsBuffer[pointsIndex].faction = 1;
-    pointsBuffer[pointsIndex].isActive = 1;
-    colorTexture[float2(injectPoints.z, injectPoints.w)] = factionDataBuffer[1].color;
-    
-    if (id.x == 0 && id.y == 0)
+{          
+    if (id.x >= injectionReso)
     {
-        test[0] = float4(3, 7, 7, 2);
+        return;
     }
+    
+    int index = id.y * injectionReso + id.x;
+    if (index >= injectionCount)
+    {
+        return;
+    }
+    
+    int4 injectPoints = pointsInjectBuffer[index];
+    if (injectPoints.x < resoX && injectPoints.y < resoY && injectPoints.x >= 0 && injectPoints.y >= 0)
+    {
+        int pointsIndex = injectPoints.y * resoX + injectPoints.x;
+        pointsBuffer[pointsIndex].faction = 1;
+        pointsBuffer[pointsIndex].isActive = 1;
+        colorTexture[int2(injectPoints.x, injectPoints.y)] = factionDataBuffer[1].color;
+    }
+    if (injectPoints.z < resoX && injectPoints.w < resoY && injectPoints.z >= 0 && injectPoints.w >= 0)
+    {
+        int pointsIndex = injectPoints.w * resoX + injectPoints.z;
+        pointsBuffer[pointsIndex].faction = 1;
+        pointsBuffer[pointsIndex].isActive = 1;
+        colorTexture[int2(injectPoints.z, injectPoints.w)] = factionDataBuffer[1].color;
+    }  
 }
 
 

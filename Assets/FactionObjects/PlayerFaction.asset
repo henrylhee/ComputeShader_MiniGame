@@ -13,13 +13,13 @@ MonoBehaviour:
   m_Name: PlayerFaction
   m_EditorClassIdentifier: 
   _name: 
-  color: {r: 0.7372549, g: 0, b: 0, a: 0}
+  color: {r: 0.3490566, g: 0, b: 0, a: 1}
   startPosition:
-    x: 1800
-    y: 800
+    x: 1200
+    y: 600
   conquerRate: 0.18
-  conquerStrength: 0.127
-  expansionRate: 0.094
-  expansionStrength: 0.125
-  injectionSize: 0.116
+  conquerStrength: 0.1737
+  expansionRate: 0.327
+  expansionStrength: 0.391
+  injectionSize: 0.0067
   injectionRandomness: 0.153

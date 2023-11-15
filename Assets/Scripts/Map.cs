@@ -25,6 +25,8 @@ public class Map
 
     public ComputeBuffer test;
 
+    public UnityEvent OnInjectPixels;
+
     int CSMainKernel;
     int CSInjectPointsKernel;
 
@@ -41,7 +43,12 @@ public class Map
     private int size;
     private int resoX;
     private int resoY;
+    private int injectionRadius;
     private int injectionReso;
+    private int injectionCount;
+
+    float brightnessInputIncrease;
+    float brightnessMin;
 
     private int threadGroupsX;
     private int threadGroupsY;
@@ -56,6 +63,13 @@ public class Map
         threadGroupsY = Mathf.CeilToInt(resoY / 8);
         size = resoX * resoY;
 
+        float injectSize = ((PlayerFactionSettings)GlobalSettings.Instance.factionSettings[1]).InjectionSize;
+        injectionRadius = Mathf.RoundToInt(injectSize * resoX);
+        injectionReso = injectionRadius * 2 + 1;
+
+        brightnessInputIncrease = GlobalSettings.Instance.gameSettings.BrightnessInputIncrease;
+        brightnessMin = GlobalSettings.Instance.gameSettings.BrightnessMin;
+
         Debug.Log("width resolution: " + resoX);
         Debug.Log("height resolution: " + resoY);
         Debug.Log("array size: " + size);
@@ -67,7 +81,7 @@ public class Map
      
         for (int i = 0; i < size; i++)
         {
-            points[i] = new Point(i, 0, 0, GetNeighbourIndices(i));
+            points[i] = new Point(i, 0, 0, 0, GetNeighbourIndices(i));
             impactValues[i * 4 + 0] = 0f;
             impactValues[i * 4 + 1] = 0f;
             impactValues[i * 4 + 2] = 0f;
@@ -78,6 +92,9 @@ public class Map
 
         InitializeRenderTexture();
         InitializeComputeShader();
+
+        OnInjectPixels = new UnityEvent();
+
         Debug.Log("points: " + points.Length);
     }
 
@@ -101,14 +118,20 @@ public class Map
         //Debug.Log(points[0].neighbourIndices.w);
         //Debug.Log("#### Time seed: ####"+t[0].x);
         //Debug.Log("#### random value: ####" + t[0].y);
-        //Debug.Log(t[0].z);
-        //Debug.Log(t[0].w);
+        //Debug.Log("x: " + t[0].x);
+        //Debug.Log("y: " + t[0].y);
+        //Debug.Log("z: " + t[0].z);
+        //Debug.Log("w: " + t[0].w);
     }
 
     private void InitializeRenderTexture()
     {
-        renderTexture = new RenderTexture(resoX, resoY, 0);
+        renderTexture = new RenderTexture(resoX, resoY, 32);
         renderTexture.enableRandomWrite = true;
+        renderTexture.format = RenderTextureFormat.ARGBFloat;
+        renderTexture.graphicsFormat = UnityEngine.Experimental.Rendering.GraphicsFormat.R32G32B32A32_SFloat;
+        Debug.Log("--> " + renderTexture.graphicsFormat);
+        Debug.Log("--> " + renderTexture.format);
         renderTexture.Create();
 
         Debug.Log("Initialize rendertexture");
@@ -136,9 +159,8 @@ public class Map
         factionDataBuffer = new ComputeBuffer(factionCount, sizeof(float) * 8);
         factionDataBuffer.SetData(factionData);
 
-        float injectSize = ((PlayerFactionSettings)GlobalSettings.Instance.factionSettings[1]).InjectionSize;
-        injectionReso = Mathf.CeilToInt((injectSize*resoX) / 8);
-        pointsInjectBuffer = new ComputeBuffer((injectionReso*injectionReso)/4, 16);
+        pointsInjectBuffer = new ComputeBuffer(Mathf.CeilToInt((injectionReso * injectionReso) / 2), sizeof(int)*4);
+
 
         test = new ComputeBuffer(1, sizeof(float)*4);
         t = new float4S[1];
@@ -157,10 +179,15 @@ public class Map
         computeShader.SetInt("threadCountX", threadGroupsX * 8);
         computeShader.SetInt("threadCountY", threadGroupsY * 8);
         computeShader.SetInt("indexCount", size);
+
+        computeShader.SetFloat("brightnessMin", brightnessMin);
+        computeShader.SetFloat("brightnessInputIncrease", brightnessInputIncrease);
+
         computeShader.SetTexture(CSMainKernel, "colorTexture", renderTexture);
         computeShader.SetTexture(CSInjectPointsKernel, "colorTexture", renderTexture);
 
         computeShader.SetBuffer(CSMainKernel, "factionDataBuffer", factionDataBuffer);
+        computeShader.SetBuffer(CSInjectPointsKernel, "factionDataBuffer", factionDataBuffer);
         computeShader.SetBuffer(CSMainKernel, "pointsBuffer", pointsBuffer);
         computeShader.SetBuffer(CSInjectPointsKernel, "pointsBuffer", pointsBuffer);
         computeShader.SetBuffer(CSMainKernel, "impactValuesBuffer", impactValuesBuffer);
@@ -220,39 +247,55 @@ public class Map
 
     public void InjectPixels(int positionX, int positionY)
     {
-        
+        OnInjectPixels.Invoke();
 
         List<int[]> pointIndices = new List<int[]>();
-        pointIndices = Rasterization.GetPointsInCircle(positionX, positionY, Mathf.RoundToInt(playerSettings.InjectionSize*resoX));
+        pointIndices = Rasterization.GetPointsInCircle(positionX, positionY, injectionRadius);
+        injectionCount = Mathf.CeilToInt(pointIndices.Count / 2);
 
-        injectionPoints = new int4S[Mathf.CeilToInt(pointIndices.Count/2)];
-        for (int  i = 0; i < injectionPoints.Length-1; i++)
+        computeShader.SetInt("injectionCount", injectionCount);
+
+        injectionPoints = new int4S[Mathf.CeilToInt((injectionReso*injectionReso)/2)];
+        int index = 0;
+        for (int  i = 0; i < pointIndices.Count; i++)
         {
-            injectionPoints[i].x = pointIndices[i*2][0];
-            injectionPoints[i].y = pointIndices[i*2][1];
-            injectionPoints[i].z = pointIndices[i*2+1][0];
-            injectionPoints[i].w = pointIndices[i*2+1][1];
+            if (i%2 == 0)
+            {
+                injectionPoints[index].x = pointIndices[i][0];
+                injectionPoints[index].y = pointIndices[i][1];
+            }
+            else
+            {
+                injectionPoints[index].z = pointIndices[i][0];
+                injectionPoints[index].w = pointIndices[i][1];
+
+                index++;
+            }           
         }
-        injectionPoints[injectionPoints.Length - 1].x = pointIndices[(injectionPoints.Length - 1) * 2][0];
-        injectionPoints[injectionPoints.Length - 1].y = pointIndices[(injectionPoints.Length - 1) * 2][1];
-        if(pointIndices.Count%2 == 0) 
+        if (pointIndices.Count % 2 != 0)
         {
-            injectionPoints[injectionPoints.Length - 1].z = pointIndices[(injectionPoints.Length - 1) * 2 + 1][0];
-            injectionPoints[injectionPoints.Length - 1].w = pointIndices[(injectionPoints.Length - 1) * 2 + 1][1];
+            injectionPoints[injectionCount-1].z = -1;
+            injectionPoints[injectionCount-1].w = -1;
         }
 
-        
+        Debug.Log("Mouse clicked at: " + positionX + ", " + positionY);
+
+
         pointsInjectBuffer.SetData(injectionPoints);
 
-        computeShader.Dispatch(CSInjectPointsKernel, injectionReso, injectionReso, 1);
+        computeShader.Dispatch(CSInjectPointsKernel, Mathf.CeilToInt(injectionReso/8), Mathf.CeilToInt(injectionReso/8), 1);
+
         Debug.Log(CSMainKernel);
         Debug.Log(CSInjectPointsKernel);
-        Debug.Log("Mouse clicked at: " + positionX+", " + positionY);
-        Debug.Log("amount of injected points: "+injectionPoints.Length);
+        
+        Debug.Log("amount of injected points: " + pointIndices.Count);
+        Debug.Log("buffer length: " + injectionPoints.Length);
+        Debug.Log("injection resolution: " + injectionReso);
         test.GetData(t);
-        Debug.Log(t[0].x);
-
-        pointsInjectBuffer.Release();
+        //Debug.Log(t[0].x);
+        //Debug.Log(t[0].y);
+        //Debug.Log(t[0].z);
+        //Debug.Log(t[0].w);
     }
 
     public void ReleaseComputeBuffer()
@@ -261,6 +304,29 @@ public class Map
         pointsBuffer.Release();
         impactValuesBuffer.Release();
         test.Release();
+        pointsInjectBuffer.Release();
+    }
+
+    private void GetStartIndices(int x, int y )
+    {
+
+    }
+
+    private int[][] Get8And1Neighbours(int x, int y)
+    {
+        int[][] result = new int[8][];
+
+        int x0 = x-1;
+        int y0 = y-1;
+        for (int yIndex = y0; yIndex < y0+3; yIndex++)
+        {
+            for (int xIndex = x0; xIndex < x0+3; xIndex++)
+            {
+
+            }
+        }
+
+        return result;
     }
 }
 

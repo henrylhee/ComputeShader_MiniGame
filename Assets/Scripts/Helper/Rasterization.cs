@@ -33,7 +33,9 @@ public class Rasterization
             if (error >= 0)
             {
                 if (x != lastY)
+                {
                     plot4points(buffer, cx, cy, lastY, x);
+                }
 
                 error -= x;
                 --x;
@@ -46,15 +48,16 @@ public class Rasterization
     {
         horizontalLine(buffer, cx - x, cy + y, cx + x);
         if (y != 0)
+        {
             horizontalLine(buffer, cx - x, cy - y, cx + x);
+        }
     }
 
     static void horizontalLine(List<int[]> buffer, int x0, int y0, int x1)
     {
-        int[] pointIndex = new int[2];
         for (int x = x0; x <= x1; ++x)
-            pointIndex[0] = x;
-            pointIndex[1] = y0;
-            buffer.Add(pointIndex);
+        {
+            buffer.Add(new int[] {x, y0});
+        }   
     }
 }

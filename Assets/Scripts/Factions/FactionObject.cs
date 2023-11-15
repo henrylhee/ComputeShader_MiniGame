@@ -20,10 +20,10 @@ public class FactionObject : ScriptableObject
     [SerializeField, Range(0, 0.2f)]
     float conquerStrength;
     public float ConquerStrength { get => conquerStrength; }
-    [SerializeField, Range(0, 0.2f)]
+    [SerializeField, Range(0, 1f)]
     float expansionRate;
     public float ExpansionRate { get => expansionRate;}
-    [SerializeField, Range(0, 0.2f)]
+    [SerializeField, Range(0, 1f)]
     float expansionStrength;
     public float ExpansionStrength { get => expansionStrength; }
     //[SerializeField, Range(0, 0.2f)]

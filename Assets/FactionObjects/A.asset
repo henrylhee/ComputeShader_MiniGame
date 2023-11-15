@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: A
   m_EditorClassIdentifier: 
   _name: A
-  color: {r: 1, g: 0, b: 0, a: 0}
+  color: {r: 1, g: 0, b: 0.9473176, a: 1}
   startPosition:
     x: 100
     y: 100
   conquerRate: 0.1
   conquerStrength: 0.2
-  expansionRate: 0.073
-  expansionStrength: 0.2
+  expansionRate: 0.413
+  expansionStrength: 0.374

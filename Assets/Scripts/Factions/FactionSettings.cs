@@ -20,10 +20,10 @@ public class FactionSettings
     [SerializeField,Range(0,0.2f)]
     private float conquerStrength;
     public float ConquerStrength { get => conquerStrength; }
-    [SerializeField, Range(0, 0.2f)]
+    [SerializeField, Range(0, 1f)]
     private float expansionRate;
     public float ExpansionRate { get => expansionRate; }
-    [SerializeField, Range(0, 0.2f)]
+    [SerializeField, Range(0, 1f)]
     private float expansionStrength;
     public float ExpansionStrength { get => expansionStrength; }
     //[SerializeField]

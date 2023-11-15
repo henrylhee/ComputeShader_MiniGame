@@ -22,6 +22,7 @@ public class Controller : MonoBehaviour
         {
             mousePosition = Input.mousePosition;
             MouseJustPressed?.Invoke(Mathf.RoundToInt(mousePosition.x), Mathf.RoundToInt(mousePosition.y));
+            Debug.Log("mouse just pressed");
         }
         else
         {
