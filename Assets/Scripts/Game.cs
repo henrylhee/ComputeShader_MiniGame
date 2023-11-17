@@ -32,13 +32,13 @@ public class Game : MonoBehaviour
         time = Time.time;
         updateTime = .5f;
         fps = 0;
-        //Application.targetFrameRate = 30;
+        Application.targetFrameRate = 60;
     }
 
     private void Start()
     {
         audio = GetComponentInChildren<Audio>();
-        GameModel.Instance.map.OnInjectPixels.AddListener(audio.PlayInjectPixelsSound);
+        GameModel.Instance.map.PixelsInjected.AddListener(audio.PlayInjectPixelsSound);
     }
 
 

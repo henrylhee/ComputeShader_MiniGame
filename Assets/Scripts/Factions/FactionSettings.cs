@@ -14,10 +14,10 @@ public class FactionSettings
     [SerializeField]
     private Vector2Int startPosition;
     public Vector2Int StartPosition { get => startPosition;}
-    [SerializeField, Range(0, 0.2f)]
+    [SerializeField, Range(0, 1f)]
     private float conquerRate;
     public float ConquerRate { get => conquerRate; }
-    [SerializeField,Range(0,0.2f)]
+    [SerializeField,Range(0,1f)]
     private float conquerStrength;
     public float ConquerStrength { get => conquerStrength; }
     [SerializeField, Range(0, 1f)]

@@ -170,6 +170,8 @@ MonoBehaviour:
   speed: 1
   brightnessMin: 0.5
   brightnessInputIncrease: 0.001
+  neutralTimeInterval: 3
+  accumulatedStrengthDecrease: 0.0003
 --- !u!1 &501355046
 GameObject:
   m_ObjectHideFlags: 0

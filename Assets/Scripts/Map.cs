@@ -10,9 +10,13 @@ using UnityEditor.Rendering.LookDev;
 using UnityEngine.UIElements;
 using Unity.VisualScripting;
 using UnityEngine.Events;
+using System.Collections;
+using System.Threading.Tasks;
 
 public class Map
 {
+    FactionScaling factionScaling;
+
     private ComputeShader computeShader;
     private ComputeShader setupShader;
 
@@ -25,7 +29,7 @@ public class Map
 
     public ComputeBuffer test;
 
-    public UnityEvent OnInjectPixels;
+    public UnityEvent PixelsInjected;
 
     int CSMainKernel;
     int CSInjectPointsKernel;
@@ -54,9 +58,11 @@ public class Map
     private int threadGroupsY;
 
 
-
     public void Initialize()
     {
+        factionScaling = new FactionScaling();
+        factionScaling.Initialize();
+
         resoX = GameModel.Instance.resolution.width;
         resoY = GameModel.Instance.resolution.height;
         threadGroupsX = Mathf.CeilToInt(resoX / 8);
@@ -93,19 +99,24 @@ public class Map
         InitializeRenderTexture();
         InitializeComputeShader();
 
-        OnInjectPixels = new UnityEvent();
+        PixelsInjected = new UnityEvent();
 
         Debug.Log("points: " + points.Length);
     }
+
+    
 
     public void Update()
     {
         timeSeed += Time.deltaTime;
         ComputeShaderUpdate();
+        factionScaling.Update();
     }
 
     private void ComputeShaderUpdate()
     {
+        Debug.Log("--->>>> "+factionScaling.accumulatedStrength);
+        computeShader.SetFloat("enemyStrength", factionScaling.accumulatedStrength);
         computeShader.SetFloat("timeSeed", timeSeed);
         computeShader.SetInt("hasInteracted", 0);
         computeShader.Dispatch(CSMainKernel, threadGroupsX, threadGroupsY, 1);
@@ -183,6 +194,8 @@ public class Map
         computeShader.SetFloat("brightnessMin", brightnessMin);
         computeShader.SetFloat("brightnessInputIncrease", brightnessInputIncrease);
 
+        computeShader.SetFloat("enemyStrength", factionScaling.accumulatedStrength);
+
         computeShader.SetTexture(CSMainKernel, "colorTexture", renderTexture);
         computeShader.SetTexture(CSInjectPointsKernel, "colorTexture", renderTexture);
 
@@ -247,7 +260,6 @@ public class Map
 
     public void InjectPixels(int positionX, int positionY)
     {
-        OnInjectPixels.Invoke();
 
         List<int[]> pointIndices = new List<int[]>();
         pointIndices = Rasterization.GetPointsInCircle(positionX, positionY, injectionRadius);
@@ -296,6 +308,8 @@ public class Map
         //Debug.Log(t[0].y);
         //Debug.Log(t[0].z);
         //Debug.Log(t[0].w);
+        factionScaling.OnInjectPixels();
+        PixelsInjected.Invoke();
     }
 
     public void ReleaseComputeBuffer()
