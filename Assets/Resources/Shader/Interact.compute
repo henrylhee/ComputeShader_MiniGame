@@ -165,25 +165,50 @@ void CSMain(int3 id : SV_DispatchThreadID)
         }
         
         
-        
-        float maxImpact = impactValuesBuffer[4 * index];
-        int successfulneighbourDir = 0;
-        for (int j = 1; j < 4; j++)
+        int successfulNeighbour;
+        int4 activeNeighbours;
+        float impactValuesCombined = 0;
+        int inactiveNeighboursCount = 0;
+        float randVal = rand3dTo1d(float3(st, timeSeed * 2.1));
+        for (int j = 0; j < 4; j++)
         {
-            if (maxImpact < impactValuesBuffer[4 * index + j])
+            if (impactValuesBuffer[4 * index + j] > 0)
             {
-                maxImpact = impactValuesBuffer[4 * index + j];
-                successfulneighbourDir = j;
+                activeNeighbours[j] = 1;         
+                impactValuesCombined += impactValuesBuffer[4 * index + j];
+            }
+            else
+            {
+                activeNeighbours[j] = 0;
+                inactiveNeighboursCount++;
             }
         }
         
-        if (maxImpact == 0)
+        if (inactiveNeighboursCount == 4)
         {
             return;
         }
+        else
+        {
+            float addedImpact = 0;
+            float relRandomVal = randVal * impactValuesCombined;
+            for (int i = 0; i < 4 ; i++)
+            {
+                if (activeNeighbours[i] == 1)
+                {
+                    addedImpact += impactValuesBuffer[4 * index + i];
+                    if (relRandomVal < addedImpact)
+                    {
+                        successfulNeighbour = i;
+                        break;
+                    }
+
+                }
+            }
+        }
+        int newFaction = pointsBuffer[neighbourIndices[(successfulNeighbour + 2) % 4]].faction;
 
         //float defence;
-        //float randVal = rand3dTo1d(float3(st, timeSeed * 2.1));
         //if (faction == 1)
         //{
         //    if (randVal - enemyStrength > 0)
@@ -208,14 +233,6 @@ void CSMain(int3 id : SV_DispatchThreadID)
         //}   
         
         
-        else
-        {
-            for(int i = 0; i < 4; i++)
-            {
-                impactValuesBuffer[4 * index + i] = 0;
-            }
-        }
-        int newFaction = pointsBuffer[neighbourIndices[(successfulneighbourDir + 2) % 4]].faction;
     
         pointsBuffer[index].faction = newFaction;
         

@@ -99,7 +99,7 @@ public class Game : MonoBehaviour
         {
             if (GameModel.Instance.map != null)
             {
-                GameModel.Instance.map.UpdateSettings();
+                GameModel.Instance.map.factionDataManager.SetFactionData();
             }
         }
     }

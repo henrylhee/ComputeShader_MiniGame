@@ -44,7 +44,7 @@ public class Oscillation
     public void Update()
     {
         timeSinceInduction += Time.deltaTime;
-        Debug.Log("timeSinceInduction: " + timeSinceInduction);
+        Debug.Log("base amplitude: "+ baseAmplitude);
         Debug.Log("induced amplitude: " + inducedAmplitude);
     }
 
@@ -77,7 +77,7 @@ public class Oscillation
 
     public float GetAmplitude()
     {
-        return baseAmplitude + inducedAmplitude;
+        return Mathf.Clamp01(baseAmplitude + inducedAmplitude);
     }
 
     private float GetAmplitudeDecline()

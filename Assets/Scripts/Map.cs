@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 
 public class Map
 {
-    FactionScaling factionScaling;
+    public FactionDataManager factionDataManager;
 
     private ComputeShader computeShader;
     private ComputeShader setupShader;
@@ -41,8 +41,6 @@ public class Map
     Point[] points;
     float[] impactValues;
     int4S[] injectionPoints;
-    FactionData[] factionData;
-    int factionCount;
 
     private int size;
     private int resoX;
@@ -60,8 +58,8 @@ public class Map
 
     public void Initialize()
     {
-        factionScaling = new FactionScaling();
-        factionScaling.Initialize();
+        factionDataManager = new FactionDataManager();
+        factionDataManager.Initialize();
 
         resoX = GameModel.Instance.resolution.width;
         resoY = GameModel.Instance.resolution.height;
@@ -79,8 +77,6 @@ public class Map
         Debug.Log("width resolution: " + resoX);
         Debug.Log("height resolution: " + resoY);
         Debug.Log("array size: " + size);
-
-        InitializeFactionData();
 
         points = new Point[size];
         impactValues = new float[size*4];
@@ -109,14 +105,15 @@ public class Map
     public void Update()
     {
         timeSeed += Time.deltaTime;
+        factionDataManager.Update();
+        factionDataBuffer.SetData(factionDataManager.GetFactionData());
         ComputeShaderUpdate();
-        factionScaling.Update();
     }
 
     private void ComputeShaderUpdate()
     {
-        Debug.Log("--->>>> "+factionScaling.accumulatedStrength);
-        computeShader.SetFloat("enemyStrength", factionScaling.accumulatedStrength);
+        //Debug.Log("--->>>> "+ factionDataManager.accumulatedStrength);
+        computeShader.SetBuffer(0, "factionDataBuffer", factionDataBuffer);
         computeShader.SetFloat("timeSeed", timeSeed);
         computeShader.SetInt("hasInteracted", 0);
         computeShader.Dispatch(CSMainKernel, threadGroupsX, threadGroupsY, 1);
@@ -167,8 +164,8 @@ public class Map
         impactValuesBuffer = new ComputeBuffer(size*4, sizeof(float));
         impactValuesBuffer.SetData(impactValues);
 
-        factionDataBuffer = new ComputeBuffer(factionCount, sizeof(float) * 8);
-        factionDataBuffer.SetData(factionData);
+        factionDataBuffer = new ComputeBuffer(factionDataManager.factionCount, sizeof(float) * 8);
+        factionDataBuffer.SetData(factionDataManager.GetFactionData());
 
         pointsInjectBuffer = new ComputeBuffer(Mathf.CeilToInt((injectionReso * injectionReso) / 2), sizeof(int)*4);
 
@@ -194,7 +191,7 @@ public class Map
         computeShader.SetFloat("brightnessMin", brightnessMin);
         computeShader.SetFloat("brightnessInputIncrease", brightnessInputIncrease);
 
-        computeShader.SetFloat("enemyStrength", factionScaling.accumulatedStrength);
+        //computeShader.SetFloat("enemyStrength", factionScaling.accumulatedStrength);
 
         computeShader.SetTexture(CSMainKernel, "colorTexture", renderTexture);
         computeShader.SetTexture(CSInjectPointsKernel, "colorTexture", renderTexture);
@@ -210,7 +207,7 @@ public class Map
     private void GenerateStartPositions()
     {
         List<FactionSettings> settings = GlobalSettings.Instance.factionSettings;
-        for (int i = 1; i < factionCount; i++)
+        for (int i = 1; i < factionDataManager.factionCount; i++)
         {
             int index = GetPositionIndex(settings[i].StartPosition);
             points[index].faction = settings[i].id;
@@ -232,30 +229,6 @@ public class Map
     public int GetPositionIndex(Vector2Int position)
     {
         return resoX*(position.y-1) + position.x - 1;
-    }
-
-    public void UpdateSettings()
-    {
-        InitializeFactionData();
-        factionDataBuffer.SetData(factionData);
-        computeShader.SetBuffer(0, "factionDataBuffer", factionDataBuffer);
-    }
-
-    private void InitializeFactionData()
-    {
-        List<FactionSettings> settings = GlobalSettings.Instance.factionSettings;
-        factionCount = settings.Count;
-        factionData = new FactionData[factionCount];
-        factionData[0] = new FactionData();
-        for (int i = 1; i < factionCount; i++)
-        {
-            factionData[i] = new FactionData();
-            factionData[i].conquerRate = settings[i].ConquerRate;
-            factionData[i].conquerStrength = settings[i].ConquerStrength;
-            factionData[i].expansionRate = settings[i].ExpansionRate;
-            factionData[i].expansionStrength = settings[i].ExpansionStrength;
-            factionData[i].color = settings[i].Color;
-        }
     }
 
     public void InjectPixels(int positionX, int positionY)
@@ -308,7 +281,7 @@ public class Map
         //Debug.Log(t[0].y);
         //Debug.Log(t[0].z);
         //Debug.Log(t[0].w);
-        factionScaling.OnInjectPixels();
+        factionDataManager.PixelsInjected();
         PixelsInjected.Invoke();
     }
 

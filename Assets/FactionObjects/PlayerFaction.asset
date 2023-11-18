@@ -19,7 +19,7 @@ MonoBehaviour:
     y: 600
   conquerRate: 1
   conquerStrength: 0.05
-  expansionRate: 0.605
+  expansionRate: 0.228
   expansionStrength: 0.391
   injectionSize: 0.0108
   injectionRandomness: 0.153

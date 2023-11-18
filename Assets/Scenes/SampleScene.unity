@@ -169,9 +169,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 1
   brightnessMin: 0.5
-  brightnessInputIncrease: 0.001
+  brightnessInputIncrease: 0.0001
   neutralTimeInterval: 3
-  accumulatedStrengthDecrease: 0.0003
+  accumulatedForceDecrease: 3
+  springConstant: 3
+  dampingConstant: 3
+  mass: 3
 --- !u!1 &501355046
 GameObject:
   m_ObjectHideFlags: 0
@@ -576,7 +579,7 @@ MonoBehaviour:
   mouseColor: {r: 0.028444227, g: 0.8867924, b: 0.75512165, a: 0}
   emptyColor: {r: 0.8207547, g: 0.28045678, b: 0, a: 0}
   mouseRadius: 0.0421
-  renderTextureMat: {fileID: 2100000, guid: 25972769248426141ad5920e89b8ebaa, type: 2}
+  renderTextureMat: {fileID: 0}
 --- !u!114 &1235421784
 MonoBehaviour:
   m_ObjectHideFlags: 0
