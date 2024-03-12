@@ -29,7 +29,7 @@ public class Map
 
     public ComputeBuffer test;
 
-    public UnityEvent PixelsInjected;
+    public UnityEvent PixelsInjected = new UnityEvent();
 
     int CSMainKernel;
     int CSInjectPointsKernel;
@@ -94,8 +94,6 @@ public class Map
 
         InitializeRenderTexture();
         InitializeComputeShader();
-
-        PixelsInjected = new UnityEvent();
 
         Debug.Log("points: " + points.Length);
     }
@@ -309,28 +307,6 @@ public class Map
         impactValuesBuffer.Release();
         test.Release();
         pointsInjectBuffer.Release();
-    }
-
-    private void GetStartIndices(int x, int y )
-    {
-
-    }
-
-    private int[][] Get8And1Neighbours(int x, int y)
-    {
-        int[][] result = new int[8][];
-
-        int x0 = x-1;
-        int y0 = y-1;
-        for (int yIndex = y0; yIndex < y0+3; yIndex++)
-        {
-            for (int xIndex = x0; xIndex < x0+3; xIndex++)
-            {
-
-            }
-        }
-
-        return result;
     }
 }
 

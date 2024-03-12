@@ -16,13 +16,7 @@ public class Oscillation
 
     float baseAmplitude;
     float eigenAngularFrequency;
-    float angularFrequency;
     float gamma;
-
-    float inducingForce;
-    float inducingAmplitude;
-    float inducingFrequency;
-
 
 
     public void Initialize(float springConstant, float dampingConstant, float mass, float baseForce)
