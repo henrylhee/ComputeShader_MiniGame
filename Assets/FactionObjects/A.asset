@@ -15,9 +15,9 @@ MonoBehaviour:
   _name: A
   color: {r: 1, g: 0, b: 0.9473176, a: 1}
   startPosition:
-    x: 100
-    y: 100
+    x: 500
+    y: 500
   conquerRate: 1
-  conquerStrength: 0.06
-  expansionRate: 0.434
-  expansionStrength: 0.135
+  conquerStrength: 0.14
+  expansionRate: 0.2
+  expansionStrength: 0.5

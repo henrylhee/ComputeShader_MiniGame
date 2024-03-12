@@ -11,7 +11,7 @@ using UnityEngine.Events;
 using System.Collections;
 using System.Threading.Tasks;
 
-public class Map
+public class ComputeErosionMap
 {
     public FactionDataManager factionDataManager;
 
@@ -20,9 +20,7 @@ public class Map
 
     public RenderTexture renderTexture;
 
-    public ComputeBuffer factionDataConstantBuffer;
-    public ComputeBuffer factionDataDynamicBuffer;
-
+    public ComputeBuffer factionDataBuffer;
     public ComputeBuffer pointsBuffer;
     public ComputeBuffer impactValuesBuffer;
     public ComputeBuffer pointsInjectBuffer;
@@ -84,7 +82,7 @@ public class Map
         for (int i = 0; i < size; i++)
         {
             points[i] = new Point(i, 0, 0, 0, GetNeighbourIndices(i));
-            impactValues[i * 4] = 0f;
+            impactValues[i * 4 + 0] = 0f;
             impactValues[i * 4 + 1] = 0f;
             impactValues[i * 4 + 2] = 0f;
             impactValues[i * 4 + 3] = 0f;
@@ -106,15 +104,14 @@ public class Map
     {
         timeSeed += Time.deltaTime;
         factionDataManager.Update();
+        factionDataBuffer.SetData(factionDataManager.GetFactionDataConstant());
         ComputeShaderUpdate();
     }
 
     private void ComputeShaderUpdate()
     {
-        Debug.Log("--->>>> 2 " + factionDataManager.GetFactionDataDynamic()[1].conquerStrength);
-        Debug.Log("--->>>> 2 "+ factionDataManager.GetFactionDataDynamic()[2].conquerStrength);
-        factionDataDynamicBuffer.SetData(factionDataManager.GetFactionDataDynamic());
-        computeShader.SetBuffer(CSMainKernel, "factionDataDynamicBuffer", factionDataDynamicBuffer);
+        //Debug.Log("--->>>> "+ factionDataManager.accumulatedStrength);
+        computeShader.SetBuffer(0, "factionDataBuffer", factionDataBuffer);
         computeShader.SetFloat("timeSeed", timeSeed);
         computeShader.SetInt("hasInteracted", 0);
         computeShader.Dispatch(CSMainKernel, threadGroupsX, threadGroupsY, 1);
@@ -165,12 +162,11 @@ public class Map
         impactValuesBuffer = new ComputeBuffer(size*4, sizeof(float));
         impactValuesBuffer.SetData(impactValues);
 
-        factionDataConstantBuffer = new ComputeBuffer(factionDataManager.factionCount, sizeof(float) * 8);
-        factionDataConstantBuffer.SetData(factionDataManager.GetFactionDataConstant());
-        factionDataDynamicBuffer = new ComputeBuffer(factionDataManager.factionCount, sizeof(float) * 4);
-        factionDataDynamicBuffer.SetData(factionDataManager.GetFactionDataDynamic());
+        factionDataBuffer = new ComputeBuffer(factionDataManager.factionCount, sizeof(float) * 8);
+        factionDataBuffer.SetData(factionDataManager.GetFactionDataConstant());
 
         pointsInjectBuffer = new ComputeBuffer(Mathf.CeilToInt((injectionReso * injectionReso) / 2), sizeof(int)*4);
+
 
         test = new ComputeBuffer(1, sizeof(float)*4);
         t = new float4S[1];
@@ -180,6 +176,7 @@ public class Map
 
         
         computeShader.SetBuffer(CSInjectPointsKernel, "pointsInjectBuffer", pointsInjectBuffer);
+        computeShader.SetBuffer(CSInjectPointsKernel, "test", test);
         computeShader.SetInt("injectionReso", injectionReso);
 
 
@@ -197,17 +194,12 @@ public class Map
         computeShader.SetTexture(CSMainKernel, "colorTexture", renderTexture);
         computeShader.SetTexture(CSInjectPointsKernel, "colorTexture", renderTexture);
 
-        computeShader.SetBuffer(CSMainKernel, "factionDataConstantBuffer", factionDataConstantBuffer);
-        computeShader.SetBuffer(CSInjectPointsKernel, "factionDataConstantBuffer", factionDataConstantBuffer);
-        computeShader.SetBuffer(CSMainKernel, "factionDataDynamicBuffer", factionDataDynamicBuffer);
-        computeShader.SetBuffer(CSInjectPointsKernel, "factionDataDynamicBuffer", factionDataDynamicBuffer);
-
+        computeShader.SetBuffer(CSMainKernel, "factionDataBuffer", factionDataBuffer);
+        computeShader.SetBuffer(CSInjectPointsKernel, "factionDataBuffer", factionDataBuffer);
         computeShader.SetBuffer(CSMainKernel, "pointsBuffer", pointsBuffer);
         computeShader.SetBuffer(CSInjectPointsKernel, "pointsBuffer", pointsBuffer);
         computeShader.SetBuffer(CSMainKernel, "impactValuesBuffer", impactValuesBuffer);
-        computeShader.SetBuffer(CSInjectPointsKernel, "impactValuesBuffer", impactValuesBuffer);
         computeShader.SetBuffer(CSMainKernel, "test", test);
-        computeShader.SetBuffer(CSInjectPointsKernel, "test", test);
     }
 
     private void GenerateStartPositions()
@@ -287,24 +279,13 @@ public class Map
         //Debug.Log(t[0].y);
         //Debug.Log(t[0].z);
         //Debug.Log(t[0].w);
-
         factionDataManager.PixelsInjected();
-        
         PixelsInjected.Invoke();
-    }
-
-    public void UpdateFactionData()
-    {
-        factionDataManager.SetFactionData();
-        factionDataConstantBuffer.SetData(factionDataManager.GetFactionDataConstant());
-        computeShader.SetBuffer(CSMainKernel, "factionDataConstantBuffer", factionDataConstantBuffer);
-        computeShader.SetBuffer(CSInjectPointsKernel, "factionDataConstantBuffer", factionDataConstantBuffer);
     }
 
     public void ReleaseComputeBuffer()
     {
-        factionDataConstantBuffer.Release();
-        factionDataDynamicBuffer.Release();
+        factionDataBuffer.Release();
         pointsBuffer.Release();
         impactValuesBuffer.Release();
         test.Release();
@@ -333,4 +314,3 @@ public class Map
         return result;
     }
 }
-

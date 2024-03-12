@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-public class Game : MonoBehaviour
+public class ComputeErosion : MonoBehaviour
 {
     UnityEvent GameEnds;
 
@@ -66,7 +66,7 @@ public class Game : MonoBehaviour
     {
         factionSettingsList = new List<FactionSettings>();
         FactionSettings dummy = new FactionSettings();
-        dummy.Initialize(ScriptableObject.CreateInstance<FactionObject>(),0);
+        dummy.Initialize(ScriptableObject.CreateInstance<FactionObject>(), 0);
         factionSettingsList.Add(dummy);
 
         PlayerFactionSettings playerSettings = new PlayerFactionSettings();
@@ -82,7 +82,7 @@ public class Game : MonoBehaviour
         }
 
         GlobalSettings.Instance.Initialize(factionSettingsList, GetComponentInChildren<GameSettings>());
-        
+
         GameModel.Instance.Initialize();
         GameEnds = new UnityEvent();
         GameEnds.AddListener(GameModel.Instance.map.ReleaseComputeBuffer);

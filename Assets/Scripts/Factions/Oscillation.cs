@@ -11,6 +11,7 @@ public class Oscillation
     float mass;
 
     float inducedAmplitude;
+    float tempInducedAmplitude;
     float timeSinceInduction;
 
     float baseAmplitude;
@@ -44,8 +45,7 @@ public class Oscillation
     public void Update()
     {
         timeSinceInduction += Time.deltaTime;
-        Debug.Log("base amplitude: "+ baseAmplitude);
-        Debug.Log("induced amplitude: " + inducedAmplitude);
+        tempInducedAmplitude = GetAmplitudeDecline();
     }
 
     // without damping the amplitude is arbitrary, so we choose a amplitude for our oscillation
@@ -71,13 +71,13 @@ public class Oscillation
 
     public void AddForce( float force)
     {
-        inducedAmplitude = GetAmplitudeDecline() + force / springConstant;
+        inducedAmplitude = tempInducedAmplitude + force / springConstant;
         timeSinceInduction = 0;
     }
 
     public float GetAmplitude()
     {
-        return Mathf.Clamp01(baseAmplitude + inducedAmplitude);
+        return Mathf.Clamp01(baseAmplitude + tempInducedAmplitude);
     }
 
     private float GetAmplitudeDecline()

@@ -4,7 +4,9 @@ using UnityEngine;
 
 public class FactionDataManager
 {
-    FactionData[] factionData;
+    FactionDataConst[] factionDataConstant;
+    FactionDataDyn[] factionDataDynamic;
+
     public int factionCount;
 
     List<Oscillation> oscillations;
@@ -34,16 +36,26 @@ public class FactionDataManager
     {
         List<FactionSettings> settings = GlobalSettings.Instance.factionSettings;
         factionCount = settings.Count;
-        factionData = new FactionData[factionCount];
-        factionData[0] = new FactionData();
+        factionDataConstant = new FactionDataConst[factionCount];
+        factionDataConstant[0] = new FactionDataConst();
+
+        factionDataDynamic = new FactionDataDyn[factionCount];
+        factionDataDynamic[0] = new FactionDataDyn();
+
         for (int i = 1; i < factionCount; i++)
         {
-            factionData[i] = new FactionData();
-            factionData[i].conquerRate = settings[i].ConquerRate;
-            factionData[i].conquerStrength = settings[i].ConquerStrength;
-            factionData[i].expansionRate = settings[i].ExpansionRate;
-            factionData[i].expansionStrength = settings[i].ExpansionStrength;
-            factionData[i].color = settings[i].Color;
+            factionDataConstant[i] = new FactionDataConst();
+            factionDataConstant[i].conquerRate = settings[i].ConquerRate;
+            factionDataConstant[i].dummy = settings[i].ConquerStrength;
+            factionDataConstant[i].expansionRate = settings[i].ExpansionRate;
+            factionDataConstant[i].expansionStrength = settings[i].ExpansionStrength;
+            factionDataConstant[i].color = settings[i].Color;
+
+            factionDataDynamic[i] = new FactionDataDyn();
+            factionDataDynamic[i].conquerStrength = settings[i].ConquerStrength;
+            factionDataDynamic[i].dummy1 = 0;
+            factionDataDynamic[i].dummy2 = 0;
+            factionDataDynamic[i].dummy3 = 0;
         }
 
         float springConstant = GlobalSettings.Instance.gameSettings.SpringConstant;
@@ -60,20 +72,26 @@ public class FactionDataManager
 
     public void Update()
     {
+        accumulatedForce = Mathf.Clamp01(accumulatedForce - accumulatedForceDecrease);
         foreach (Oscillation oscillation in oscillations)
         {
             oscillation.Update();
         }
 
-        for (int i = 2; i < factionData.Length; i++)
+        for (int i = 2; i < factionCount; i++)
         {
-            factionData[i].conquerStrength = oscillations[i - 2].GetAmplitude();
+            factionDataDynamic[i].conquerStrength = oscillations[i - 2].GetAmplitude();
         }
     }
 
-    public FactionData[] GetFactionData()
+    public FactionDataConst[] GetFactionDataConstant()
     {
-        return factionData;
+        return factionDataConstant;
+    }
+
+    public FactionDataDyn[] GetFactionDataDynamic()
+    {
+        return factionDataDynamic;
     }
 
     public void PixelsInjected()

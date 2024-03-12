@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 18440ca815f551d48a1df0121cf0edc6, type: 3}
-  m_Name: PlayerFaction
+  m_Name: PlayerFaction 1
   m_EditorClassIdentifier: 
   _name: 
   color: {r: 0.3490566, g: 0, b: 0, a: 1}
@@ -18,8 +18,8 @@ MonoBehaviour:
     x: 1200
     y: 600
   conquerRate: 1
-  conquerStrength: 0.1
-  expansionRate: 0.2
-  expansionStrength: 0.5
+  conquerStrength: 0.05
+  expansionRate: 0.228
+  expansionStrength: 0.391
   injectionSize: 0.0108
   injectionRandomness: 0.153

@@ -168,13 +168,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 1
-  brightnessMin: 0.3
-  brightnessInputIncrease: 0.001
+  brightnessMin: 0.5
+  brightnessInputIncrease: 0.0001
   neutralTimeInterval: 3
-  accumulatedForceDecrease: 0.0005
-  springConstant: 1
-  dampingConstant: 1
-  mass: 1
+  accumulatedForceDecrease: 3
+  springConstant: 3
+  dampingConstant: 3
+  mass: 3
 --- !u!1 &501355046
 GameObject:
   m_ObjectHideFlags: 0
@@ -488,6 +488,7 @@ MonoBehaviour:
   playerFaction: {fileID: 11400000, guid: 1115113c496e18545b4b05b9bbb03074, type: 2}
   enemyFactions:
   - {fileID: 11400000, guid: e784141c61a0b7149a0230c63f703523, type: 2}
+  - {fileID: 11400000, guid: 4c3b628f446e29d46a23ce420265514b, type: 2}
   factionSettingsList: []
 --- !u!4 &926986588
 Transform:
